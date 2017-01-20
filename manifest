@@ -1,0 +1,11 @@
+Main-Class: aldenjava.opticalmapping.OMTools
+Class-Path: lib/jopt-simple-4.5.jar lib/org.apache.commons.lang_2.4.0.v
+ 201005080502.jar lib/commons-math3-3.0.jar lib/commons-io-2.4.jar lib/
+ swingx-all-1.6.4.jar lib/batik-anim.jar lib/batik-awt-util.jar lib/bat
+ ik-bridge.jar lib/batik-codec.jar lib/batik-css.jar lib/batik-dom.jar 
+ lib/batik-ext.jar lib/batik-extension.jar lib/batik-gui-util.jar lib/b
+ atik-gvt.jar lib/batik-parser.jar lib/batik-script.jar lib/batik-svg-d
+ om.jar lib/batik-svggen.jar lib/batik-swing.jar lib/batik-transcoder.j
+ ar lib/batik-util.jar lib/batik-xml.jar lib/js.jar lib/pdf-transcoder.
+ jar lib/xalan-2.6.0.jar lib/xerces_2_5_0.jar lib/xml-apis-ext.jar lib/
+ xml-apis.jar
