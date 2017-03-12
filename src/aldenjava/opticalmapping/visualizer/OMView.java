@@ -76,7 +76,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 
 import aldenjava.opticalmapping.GenomicPosNode;
-//import aldenjava.opticalmapping.OMTools;
+import aldenjava.opticalmapping.OMTools;
 import aldenjava.opticalmapping.application.svdetection.StandardSVNode;
 import aldenjava.opticalmapping.application.svdetection.StandardSVReader;
 import aldenjava.opticalmapping.data.DataFormat;
@@ -123,9 +123,9 @@ import joptsimple.OptionSpec;
  */
 public class OMView extends JFrame implements PropertyChangeListener {
 
-	
+	private final static String aboutMessage = "Program Version: " + OMTools.version;
 //	private final static String aboutMessage = "Program Version: " + OMTools.version + "\nAuthor: " + OMTools.author;
-	private final static String aboutMessage = "Program Version: ";
+//	private final static String aboutMessage = "Program Version: ";
 	public final static Dimension blankPanelSize = new Dimension(2000, 2000);
 	
 	public File workingDirectory = new File(System.getProperty("user.dir"));
@@ -520,7 +520,7 @@ public class OMView extends JFrame implements PropertyChangeListener {
 					JOptionPane.showMessageDialog(workingFrame, "No panel is opened.");
 					return;
 				}				
-				String ans = JOptionPane.showInputDialog(workingFrame, "Please input the region to be shown in chrX:NNNNN-NNNNN fromat", controlPanel.getAnchorPoint()==null?"":controlPanel.getAnchorPoint().toString());
+				String ans = JOptionPane.showInputDialog(workingFrame, "Please input the region to be shown in chrX:NNNNN-NNNNN format", controlPanel.getAnchorPoint()==null?"":controlPanel.getAnchorPoint().toString());
 				if (ans != null)
 					try {
 						GenomicPosNode anchorPoint = new GenomicPosNode(ans.trim());	

@@ -38,6 +38,7 @@ public class ViewSetting {
 	public static int signalStrokeWidth = 2;
 	public static int bodyHeight = 10;
 	public static int moleculeSpace = 10;
+	public static int maMoleculeSpace = 10;
 	public static long anchorFlankSize = 200000;
 	public static long closeSignal = 2000;
 	public static int groupRefDistance = 2000000;
@@ -45,6 +46,7 @@ public class ViewSetting {
 	public static int moleculeNameSize = 20;
 	public static long minSVObjectSize = 5000;
 	public static int maxMoleculeViewItems = 100;
+	public static int rulerHeight = 30;
 	
 	public static double defaultDNARatio = 400;
 	public static double defaultZoom = 1.0;
@@ -67,6 +69,32 @@ public class ViewSetting {
 	public static boolean alignmentViewModify = true;
 	public static boolean alignmentViewModifyScale = false;
 	
+	
+	public static void changeSetting(String setting, String value) {
+		if (setting == null)
+			return;
+		try {
+			Field field = ViewSetting.class.getDeclaredField(setting);
+			Object oldvalue = field.get(null);
+
+			field.set(null, value);
+			Object newvalue = field.get(null);
+			System.err.println("Field " + setting + " has changed value from " + oldvalue + " to " + newvalue);
+		} catch (NoSuchFieldException e) {
+			
+			System.err.println("Field " + setting + " doesn't exist");
+			System.err.println("All available settings:");
+			for (Field field : ViewSetting.class.getDeclaredFields())
+				System.err.println("- " + field.getName());
+		} catch (SecurityException e) {
+			System.err.println("Security execption while assessing fields");
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void changeSetting(String setting, int value) {
 		if (setting == null)
 			return;

@@ -50,10 +50,11 @@ import aldenjava.opticalmapping.visualizer.utils.VUtils;
 
 public class VAlignment extends VObject{
 	
-	private VRuler vruler = null;
+	private VRuler vRefRuler = null;
 	private VReference vref = null;
 	private VMolecule vmole = null;
 	private VAlignmentLines vlines = null;
+	private VRuler vMoleRuler = null;
 	private JTextArea label = null;
 	long fragDisplace;
 	long refDisplace;
@@ -76,9 +77,12 @@ public class VAlignment extends VObject{
 		id = mole.name;
 		
 		// Build Caption for the results (Results not modified)
-		StringBuilder labelCaption = new StringBuilder(String.format("%-30s%-15s%-10s%-10s%-15s%-10s%-10s%-10s%-20s\n", "RefRegion", "MoleRegion", "Orient", "Score", "Confidence", "FPR", "FNR", "Scale", "SubFragRatio"));
+//		StringBuilder labelCaption = new StringBuilder(String.format("%-30s%-15s%-10s%-10s%-15s%-10s%-10s%-10s%-20s\n", "RefRegion", "MoleRegion", "Orient", "Score", "Confidence", "FPR", "FNR", "Scale", "SubFragRatio"));
+		StringBuilder labelCaption = new StringBuilder(String.format("%-30s%-30s%-10s%-10s%-15s%-10s%-10s%-10s%-20s\n", "RefRegion", "MoleRegion", "Orient", "Score", "Confidence", "FPR", "FNR", "Scale", "SubFragRatio"));
 		for (OptMapResultNode result : resultlist)
-			labelCaption.append(String.format("%-30s%-15s%-10s%-10.1f%-15.2f%-10.6f%-10.2f%-10.2f%-20.2f\n", result.mappedRegion.toString(), String.format("%d-%d", result.subfragstart, result.subfragstop), result.mappedstrand==1?"forward":result.mappedstrand==-1?"reverse":"", result.mappedscore, result.confidence, result.getFPRate(), result.getFNRate(), result.getMapScale(), result.getSubFragRatio()));
+//			labelCaption.append(String.format("%-30s%-15s%-10s%-10.1f%-15.2f%-10.6f%-10.2f%-10.2f%-20.2f\n", result.mappedRegion.toString(), String.format("%d-%d", result.subfragstart, result.subfragstop), result.mappedstrand==1?"forward":result.mappedstrand==-1?"reverse":"", result.mappedscore, result.confidence, result.getFPRate(), result.getFNRate(), result.getMapScale(), result.getSubFragRatio()));
+			labelCaption.append(String.format("%-30s%-30s%-10s%-10.1f%-15.2f%-10.6f%-10.2f%-10.2f%-20.2f\n", result.mappedRegion.toString(), result.getMoleMappedRegion(), result.mappedstrand==1?"forward":result.mappedstrand==-1?"reverse":"", result.mappedscore, result.confidence, result.getFPRate(), result.getFNRate(), result.getMapScale(), result.getSubFragRatio()));
+			
 		label = new JTextArea(labelCaption.toString());
 		label.setFont(new Font("monospaced", Font.PLAIN, label.getFont().getSize()));
 		label.setEditable(false);
@@ -200,7 +204,7 @@ public class VAlignment extends VObject{
 		vlines = new VAlignmentLines(ref, resultlist, subrefstart, subrefstop, refDisplace, fragDisplace);
 		
 		// Construct ruler. Ruler requires special handling as reference is modified previously
-		vruler = new VRuler();
+		vRefRuler = new VRuler();
 		{
 			int p = Arrays.binarySearch(ref.refp, startpoint);
 			if (p < 0)
@@ -213,21 +217,29 @@ public class VAlignment extends VObject{
 			p -= 1;
 			long realstoppoint = (long) ((stoppoint - p) / refScale + p);
 			if (!reversed)
-				vruler.setStartEndPoint(new SimpleLongLocation(realstartpoint, realstoppoint));
+				vRefRuler.setStartEndPoint(new SimpleLongLocation(realstartpoint, realstoppoint));
 			else
-				vruler.setStartEndPoint(new SimpleLongLocation(originalRef.length() - realstartpoint + 1, originalRef.length() - realstoppoint + 1));
-			vruler.setScale(refScale);
-			vruler.setReverse(reversed);
+				vRefRuler.setStartEndPoint(new SimpleLongLocation(originalRef.length() - realstartpoint + 1, originalRef.length() - realstoppoint + 1));
+			vRefRuler.setScale(refScale);
+			vRefRuler.setReverse(reversed);
+		}
+		vMoleRuler = new VRuler(); 
+		{
+			vMoleRuler.setStartEndPoint(new SimpleLongLocation(1, mole.size));
+			vMoleRuler.setScale(1);
+			vMoleRuler.setReverse(false);
+			vMoleRuler.setInvert(true);
 		}
 		
 		
 		this.refDisplace = refDisplace - refstartCorrect; // This is necessary to minus refstartCorrect as more reference is displayed and hence the 
 		this.fragDisplace = fragDisplace;
 		
-		this.add(vruler);
+		this.add(vRefRuler);
 		this.add(vref);
 		this.add(vlines);
 		this.add(vmole);
+		this.add(vMoleRuler);
 		this.add(label);
 		this.autoSetSize();
 		this.reorganize();
@@ -244,8 +256,10 @@ public class VAlignment extends VObject{
 	@Override
 	public void setDNARatio(double dnaRatio)
 	{
-		if (vruler != null)
-			vruler.setDNARatio(dnaRatio);
+		if (vRefRuler != null)
+			vRefRuler.setDNARatio(dnaRatio);
+		if (vMoleRuler != null)
+			vMoleRuler.setDNARatio(dnaRatio);
 		if (vref != null)
 			vref.setDNARatio(dnaRatio);
 		if (vmole != null)
@@ -257,8 +271,10 @@ public class VAlignment extends VObject{
 	@Override
 	public void setRatio(double ratio)
 	{
-		if (vruler != null)
-			vruler.setRatio(ratio);
+		if (vRefRuler != null)
+			vRefRuler.setRatio(ratio);
+		if (vMoleRuler != null)
+			vMoleRuler.setRatio(ratio);
 		if (vref != null)
 			vref.setRatio(ratio);
 		if (vmole != null)
@@ -271,17 +287,19 @@ public class VAlignment extends VObject{
 	@Override
 	public void autoSetSize() 
 	{
-		vruler.autoSetSize();
-		vmole.autoSetSize();
+		vRefRuler.autoSetSize();
+		vMoleRuler.autoSetSize();
 		vref.autoSetSize();
+		vmole.autoSetSize();
 		vlines.autoSetSize();
+		
 		label.setSize(1200, (resultlist.size() + 1) * 20);
 		int width = (int) (vref.getWidth() + refDisplace / dnaRatio * ratio);
 		if (vmole.getWidth() + fragDisplace / dnaRatio * ratio > width)
 			width = (int) (vmole.getWidth() + fragDisplace / dnaRatio * ratio);
 		if (width < label.getWidth())
 			width = label.getWidth();
-		this.setSize(width, vruler.getHeight() + vref.getHeight() + vlines.getHeight() + vmole.getHeight() + label.getHeight());		
+		this.setSize(width, vRefRuler.getHeight() + vMoleRuler.getHeight() + vref.getHeight() + vlines.getHeight() + vmole.getHeight() + label.getHeight());		
 	}
 	@Override
 	public void reorganize()
@@ -289,14 +307,16 @@ public class VAlignment extends VObject{
 		int vy = 0;
 //		vruler.setLocation((int) (refDisplace / dnaRatio * ratio), vy);
 //		vruler.setLocation(0, vy);
-		vruler.setLocation((int) (refDisplace / dnaRatio * ratio), vy);
-		vy += vruler.getHeight();
+		vRefRuler.setLocation((int) (refDisplace / dnaRatio * ratio), vy);
+		vy += vRefRuler.getHeight();
 		vref.setLocation((int) (refDisplace / dnaRatio * ratio), vy);
 		vy += vref.getHeight();
 		vlines.setLocation((int) ((fragDisplace<refDisplace?fragDisplace:refDisplace) / dnaRatio * ratio), vy);
 		vy += vlines.getHeight();
 		vmole.setLocation((int) (fragDisplace / dnaRatio * ratio), vy);
 		vy += vmole.getHeight();
+		vMoleRuler.setLocation((int) (fragDisplace / dnaRatio * ratio), vy);
+		vy += vMoleRuler.getHeight();
 		label.setLocation(0, vy);
 	}
 	

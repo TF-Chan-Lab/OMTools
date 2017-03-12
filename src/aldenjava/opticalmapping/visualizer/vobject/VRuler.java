@@ -35,6 +35,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 import aldenjava.common.SimpleLongLocation;
+import aldenjava.opticalmapping.visualizer.ViewSetting;
 
 public class VRuler extends VObject{
 
@@ -44,11 +45,13 @@ public class VRuler extends VObject{
 	public static boolean display = true;
 	private boolean reverse;
 	private double scale;
+	private boolean invert = false;
 	public VRuler() 
 	{
 		this.setSize(0, 0);
 		this.reverse = false;
 		this.scale = 1.000000000;
+		this.invert = false;
 	}
 	public void setStartEndPoint(SimpleLongLocation startEndPoint) 
 	{
@@ -64,13 +67,16 @@ public class VRuler extends VObject{
 		this.scale = scale;
 	}
 	
+	public void setInvert(boolean invert) {
+		this.invert = invert;
+	}
 	@Override
 	public void autoSetSize()
 	{
 		if (startEndPoint == null)
 			this.setSize(0, 0);
 		else
-			this.setSize((int) ((startEndPoint.length()) / dnaRatio * ratio * scale), (int) (30));
+			this.setSize((int) ((startEndPoint.length()) / dnaRatio * ratio * scale), (int) (ViewSetting.rulerHeight));
 	}
 	@Override
 	public void reorganize() {
@@ -87,6 +93,15 @@ public class VRuler extends VObject{
 		Graphics2D g = (Graphics2D) graphics;
 		int vx = 0;
 		int vy = 10;
+		int markHeight = 5;
+		int textCoordinateY = 30;
+		if (invert) {
+			vy = 20;
+			markHeight = -5;
+			textCoordinateY = g.getFontMetrics().getHeight();
+		}
+			
+		
 		
     	long mark;
     	// Small marks
@@ -98,7 +113,7 @@ public class VRuler extends VObject{
 	    	while (mark < startEndPoint.max)
 	    	{
 	    		if (mark >= startEndPoint.min)
-	    			g.drawLine((int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy - 5, (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy);
+	    			g.drawLine((int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy - markHeight, (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy);
 	    		mark += smallMark;
 	    	}
     	}
@@ -108,7 +123,7 @@ public class VRuler extends VObject{
 	    	while (mark > startEndPoint.min)
 	    	{
 	    		if (mark <= startEndPoint.max)
-	    			g.drawLine((int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy - 5, (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy);
+	    			g.drawLine((int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy - markHeight, (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy);
 	    		mark -= smallMark;
 	    		
 	    	}
@@ -124,8 +139,8 @@ public class VRuler extends VObject{
         	{
         		if (mark >= startEndPoint.min)
         		{
-    				g.drawLine((int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy - 5, (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy);
-    				g.drawString(String.format("%d", mark), (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy + 20);
+    				g.drawLine((int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy - markHeight, (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy);
+    				g.drawString(String.format("%d", mark), (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), textCoordinateY);
         		}
     	    	mark += largeMark;
         	}
@@ -138,7 +153,7 @@ public class VRuler extends VObject{
 	    		if (mark <= startEndPoint.max)
         		{
     				g.drawLine((int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy - 5, (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy);
-    				g.drawString(String.format("%d", mark), (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy + 20);
+    				g.drawString(String.format("%d", mark), (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), textCoordinateY);
         		}
     	    	mark -= largeMark;
         	}

@@ -62,7 +62,7 @@ import aldenjava.script.PrecisionRecallGraphDataGenerator;
  */
 public class OMTools {
 
-	public final static String version = "OMTools Version 1.2";
+	public final static String version = "OMTools Version 1.2a";
 	public final static String author = "Alden Leung";
 	
 	private static void displayOptions() throws IOException, MapperConstructionException {		
