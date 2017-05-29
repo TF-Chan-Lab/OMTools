@@ -96,7 +96,7 @@ public class OptMapResultWriter extends OMWriter<OptMapResultNode> {
 			switch (rformat) {
 				case OMA:
 					bw.write("#OMA File format version v1.1\n");
-					bw.write("#QueryID\tQuerySeg\tQuerySegInfo\tRefID\tStrand\tScore\tConfidence\tRegSegStart\tRefSegStop\tQuerySegStart\tQuerySegStop\tRefStartCoord\tRefStopCoord\tCigar\n");
+					bw.write("#QueryID\tQuerySeg\tQuerySegInfo\tRefID\tStrand\tScore\tConfidence\tRefSegStart\tRefSegStop\tQuerySegStart\tQuerySegStop\tRefStartCoord\tRefStopCoord\tCigar\n");
 					break;
 				case OMD:
 					bw.write("#QueryID\tsimuRefID\tsimuStrand\tsimuStart\tsimuStop\tQuerySize\tQuerySeg\tQuerySegInfo\tRefID\tRefStartCoord\tRefStopCoord\tStrand\tRefSegStart\tRefSegStop\tQuerySegStart\tQuerySegStop\tAlignedSegRatio\tScore\tCigar\tConfidence\tFP\tFN\tScale\tFPRate\tFNRate\tsimuCorrectlyMapped\n");

@@ -37,7 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.List;
 
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -57,9 +56,10 @@ public abstract class ScrollablePanel extends VComponent implements Scrollable{
 	protected GenomicPosNode region;
 	protected String title = "View";
 	protected String information;
-	protected Point objBorder = new Point(20, 20);
+	protected Point objBorder = new Point(ViewSetting.objBorderX, ViewSetting.objBorderY);
 	protected JPopupMenu menu = new JPopupMenu();
 	
+//	private final Set<GotoMark> gotoMarks = new HashSet<>();
 	public ScrollablePanel(OMView mainView)	{
 		super();
 		this.mainView = mainView;
@@ -89,8 +89,33 @@ public abstract class ScrollablePanel extends VComponent implements Scrollable{
         Point oldPoint = jv.getViewPosition();
         jv.setViewPosition(new Point(newX, newY));		          
         this.firePropertyChange("ViewPosition", oldPoint, jv.getViewPosition());
-
+	}	
+	protected void navigateViewPortFromGoto(Point p) {
+		navigateViewPort(new Point((int) (p.x - ViewSetting.defaultLeftSpaceAfterGoto * ratio), (int) (p.y - ViewSetting.defaultTopSpaceAfterGoto * ratio)));
+//		createGotoMark(p);
 	}
+		
+//	private void createGotoMark(Point p) {
+//
+//		synchronized (gotoMarks) {
+//			gotoMarks.add(new VGotoMark());
+//		}
+////		new Timer(ViewSetting.gotoMarkDelay, e -> {
+////			int a = mark.color.getAlpha();
+////			a -= ViewSetting.gotoMarkAlphaChange;
+////			if (a < 0) {
+////				((Timer) e.getSource()).stop();
+////				synchronized (gotoMarks) {
+////					gotoMarks.remove(mark);
+////					ScrollablePanel.this.repaint();
+////				}
+////			}
+////			else
+////				mark.color = new Color(mark.color.getRed(), mark.color.getGreen(), mark.color.getBlue(), a);
+////		}).start();
+//
+//	}
+
 	// Listener for dragging and zooming
 	private void initMouseInput() {
 	   MouseInputAdapter mia = new MouseInputAdapter() {
@@ -173,6 +198,7 @@ public abstract class ScrollablePanel extends VComponent implements Scrollable{
 	
 	
 	// Update Title, Info, Menu
+	protected abstract JMenuItem getGotoMenu();
 	
 	protected void updateMenu() {
 		menu.removeAll();
@@ -202,6 +228,9 @@ public abstract class ScrollablePanel extends VComponent implements Scrollable{
   		});
   		menu.add(setZoomItem);
 
+  		// A Goto menu 
+  		menu.add(getGotoMenu());
+  		
   		JMenuItem saveItem = new JMenuItem("Save to image");
   		saveItem.setMnemonic('S');
   		saveItem.addActionListener(new ActionListener()
@@ -283,3 +312,4 @@ public abstract class ScrollablePanel extends VComponent implements Scrollable{
 
 
 }
+

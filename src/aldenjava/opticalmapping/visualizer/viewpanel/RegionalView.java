@@ -29,12 +29,21 @@
 
 package aldenjava.opticalmapping.visualizer.viewpanel;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
@@ -46,6 +55,7 @@ import aldenjava.opticalmapping.miscellaneous.InvalidVObjectException;
 import aldenjava.opticalmapping.visualizer.OMView;
 import aldenjava.opticalmapping.visualizer.VDataType;
 import aldenjava.opticalmapping.visualizer.ViewSetting;
+import aldenjava.opticalmapping.visualizer.vobject.VCoverage;
 import aldenjava.opticalmapping.visualizer.vobject.VMapMolecule;
 import aldenjava.opticalmapping.visualizer.vobject.VReference;
 import aldenjava.opticalmapping.visualizer.vobject.VRuler;
@@ -56,21 +66,26 @@ public class RegionalView extends ViewPanel {
 
 	private VReference vref = null;
 	private VRuler ruler;
+	private VCoverage vcov;
 	private List<VMapMolecule> moleculelist = new ArrayList<VMapMolecule>();
 	private int lineNo = 0;
 	private MoleculeCreater moleCreater = null;
 	private int sortingMethod = 0;
 	private long vrefDisplace = 0;
-	
+	private LinkedHashMap<String, Point> nameLocations = new LinkedHashMap<>();
+
 	public RegionalView(OMView mainView) {
 		super(mainView);
 		// Initialize title
 		title = "Regional View";
 		// Initialize ruler
-		this.ruler = new VRuler();
+		ruler = new VRuler();
 		ruler.setVisible(true);
-		ruler.setLocation(objBorder.x, objBorder.y);
-		this.add(ruler);
+		add(ruler);
+		
+//		vcov = new VCoverage();
+//		vcov.setVisible(true);
+//		add(vcov);
 		
 		this.autoSetSize();
 	}
@@ -134,11 +149,12 @@ public class RegionalView extends ViewPanel {
 		switch (sortingMethod)
 		{
 			case 0: 
-				sortNormal();
+				sortNormal(objBorder.x, objBorder.y + ruler.getHeight());
 				break;
 			default:;
 		}
 		ruler.setLocation(objBorder.x, objBorder.y);
+		
 		vref.setLocation(objBorder.x + (int) (vrefDisplace * ratio / dnaRatio), (int) (objBorder.y + ruler.getHeight() + ViewSetting.moleculeSpace * ratio));
 		int totalMolecules = 0;
 		int totalVisibleMolecules = 0;
@@ -150,9 +166,10 @@ public class RegionalView extends ViewPanel {
 		}
 //		updateInfo(String.format("Region: %s\nMolecules Loaded: %d\nMolecule in Region: %d\nVisible Molecules: %d\n", region.toString(), mainView.dataModule.getResult(dataSelection.get(VDataType.ALIGNMENT)).size(), totalMolecules, totalVisibleMolecules)); 
 	}	
-	private void sortNormal() {
+	private void sortNormal(int leftMargin, int topMargin) {
+		nameLocations = new LinkedHashMap<>();
 		List<Long> lineEndPos = new ArrayList<Long>();
-		int heightOfRulerAndRef = (int) (objBorder.y + ruler.getHeight() + (ViewSetting.moleculeSpace * 2 + ViewSetting.bodyHeight) * ratio);
+		int heightOfRulerAndRef = topMargin + (int) ((ViewSetting.moleculeSpace * 2 + ViewSetting.bodyHeight) * ratio);
 		int height = (int) ((ViewSetting.moleculeSpace + ViewSetting.bodyHeight * (RegionalView.showUnmap?2:1)) * ratio);
 		for (VMapMolecule vmm : moleculelist)
 		{
@@ -160,7 +177,7 @@ public class RegionalView extends ViewPanel {
 			{
 				long displacement = vmm.getMappedPos().start - region.start;
 				
-				int x = (int) (displacement / dnaRatio * ratio) + objBorder.x;
+				int x = (int) (displacement / dnaRatio * ratio) + leftMargin;
 				int y = -1;
 				for (int i = 0; i < lineEndPos.size(); i++)
 					if (displacement - lineEndPos.get(i) >= 1500)
@@ -180,13 +197,30 @@ public class RegionalView extends ViewPanel {
 				vmm.autoSetSize();
 				vmm.reorganize();
 				vmm.setVisible(true);
+				nameLocations.put(vmm.getID(), new Point(x, y));
 			}
 			else
 				vmm.setVisible(false);
 		}
 		lineNo = lineEndPos.size();
 	}
-	
+	@Override
+	protected JMenuItem getGotoMenu() {
+		JMenuItem gotoPage = new JMenuItem("Goto...");
+		gotoPage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String ans = JOptionPane.showInputDialog(mainView, "Please input molecule:");
+				if (ans != null) {
+					if (nameLocations.containsKey(ans))
+						navigateViewPortFromGoto(nameLocations.get(ans));
+					else
+						JOptionPane.showMessageDialog(mainView, "Alignment of molecule " + ans + " is not found in this region.");
+				}
+			}
+		});
+		return gotoPage;	
+	}
 	// Build molecules
 	private void buildMolecules() {
 		// Stop previous building process
@@ -357,6 +391,35 @@ public class RegionalView extends ViewPanel {
 	@Override
 	public boolean isLoadingCompleted() {
 		return moleCreater == null;
+	}
+
+
+	@Override
+	public void paintComponent(Graphics graphics) {
+		super.paintComponent(graphics);		
+		Graphics2D g = (Graphics2D) graphics;
+		if (vref == null || ruler == null || moleculelist == null)
+			return;
+		
+		// Draw the query names
+		// Determine the font size
+		Font font; 
+		int fsize = 1;
+		int h = (int) (ViewSetting.maMoleculeSpace * ratio);
+		while (true) {
+			font = new Font("Arial", Font.PLAIN, fsize + 1);
+			int testHeight = getFontMetrics(font).getHeight();
+			if (testHeight > h)
+				break;
+			fsize++;
+		}
+		font = new Font("Arial", Font.PLAIN, fsize);
+		g.setFont(font);
+		g.setPaint(ViewSetting.queryNameColor);
+		
+		if (ViewSetting.displayQueryName)
+			nameLocations.forEach((name,point) -> g.drawString(name, point.x, point.y));
+
 	}
 
 }

@@ -1,9 +1,16 @@
+src/aldenjava/common/ElementsGroup.java
+src/aldenjava/common/KeyFactory.java
+src/aldenjava/common/IntegerKeyFactory.java
+src/aldenjava/common/NumberOperation.java
 src/aldenjava/common/SimpleLocation.java
 src/aldenjava/common/SimpleLongLocation.java
+src/aldenjava/common/UnweightedRange.java
+src/aldenjava/common/WeightedRange.java
 src/aldenjava/common/TimeCounter.java
 src/aldenjava/file/ListExtractor.java
 src/aldenjava/opticalmapping/Cigar.java
 src/aldenjava/opticalmapping/GenomicPosNode.java
+src/aldenjava/opticalmapping/application/svdetection/SVDetection.java
 src/aldenjava/opticalmapping/application/svdetection/IndelNode.java
 src/aldenjava/opticalmapping/application/svdetection/InversionNode.java
 src/aldenjava/opticalmapping/application/svdetection/SVEvidence.java
@@ -12,6 +19,7 @@ src/aldenjava/opticalmapping/application/svdetection/StandardSVNode.java
 src/aldenjava/opticalmapping/application/svdetection/StandardSVReader.java
 src/aldenjava/opticalmapping/application/svdetection/StandardSVWriter.java
 src/aldenjava/opticalmapping/application/svdetection/TranslocationNode.java
+src/aldenjava/opticalmapping/assembler/LocalConsensusPattern.java
 src/aldenjava/opticalmapping/assembler/debruijn/KmerConstructor.java
 src/aldenjava/opticalmapping/clustering/KmerCluster.java
 src/aldenjava/opticalmapping/data/DataFormat.java
@@ -36,6 +44,7 @@ src/aldenjava/opticalmapping/data/annotation/UCSCGapStatistics.java
 src/aldenjava/opticalmapping/data/annotation/UCSCGapTableReader.java
 src/aldenjava/opticalmapping/data/data/BnxDataNode.java
 src/aldenjava/opticalmapping/data/data/DataNode.java
+src/aldenjava/opticalmapping/data/data/DataSignalCountNode.java
 src/aldenjava/opticalmapping/data/data/OptMapDataReader.java
 src/aldenjava/opticalmapping/data/data/OptMapDataWriter.java
 src/aldenjava/opticalmapping/data/data/ReferenceReader.java
@@ -90,6 +99,7 @@ src/aldenjava/opticalmapping/miscellaneous/VerbosePrinter.java
 src/aldenjava/opticalmapping/multiplealignment/CollinearBlock.java
 src/aldenjava/opticalmapping/multiplealignment/CollinearBlockReader.java
 src/aldenjava/opticalmapping/multiplealignment/CollinearBlockWriter.java
+src/aldenjava/opticalmapping/multiplealignment/CollinearBlockOrder.java
 src/aldenjava/opticalmapping/multiplealignment/GroupingEntry.java
 src/aldenjava/opticalmapping/multiplealignment/SegmentIdentifier.java
 src/aldenjava/opticalmapping/multiplealignment/SingleGroup.java
@@ -124,6 +134,7 @@ src/aldenjava/opticalmapping/visualizer/viewpanel/annotation/BlankAnnoPanel.java
 src/aldenjava/opticalmapping/visualizer/viewpanel/annotation/InformationPanel.java
 src/aldenjava/opticalmapping/visualizer/vobject/VAlignment.java
 src/aldenjava/opticalmapping/visualizer/vobject/VAnno.java
+src/aldenjava/opticalmapping/visualizer/vobject/VCoverage.java
 src/aldenjava/opticalmapping/visualizer/vobject/VData.java
 src/aldenjava/opticalmapping/visualizer/vobject/VIndel.java
 src/aldenjava/opticalmapping/visualizer/vobject/VInversion.java
@@ -136,6 +147,7 @@ src/aldenjava/opticalmapping/visualizer/vobject/VReference.java
 src/aldenjava/opticalmapping/visualizer/vobject/VRuler.java
 src/aldenjava/opticalmapping/visualizer/vobject/VSpace.java
 src/aldenjava/opticalmapping/visualizer/vobject/VTranslocation.java
+src/aldenjava/opticalmapping/visualizer/vobject/VVariability.java
 src/aldenjava/opticalmapping/data/data/OptMapDataGenerator.java
 src/aldenjava/opticalmapping/data/data/RandomReferenceGenerator.java
 src/aldenjava/opticalmapping/tools/FastaToOM.java

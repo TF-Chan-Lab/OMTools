@@ -35,6 +35,7 @@ import java.util.Arrays;
 
 import org.apache.commons.lang.StringUtils;
 
+import aldenjava.opticalmapping.application.svdetection.SVDetection;
 import aldenjava.opticalmapping.data.OMWriter;
 import aldenjava.opticalmapping.data.data.OptMapDataGenerator;
 import aldenjava.opticalmapping.data.data.RandomReferenceGenerator;
@@ -62,7 +63,7 @@ import aldenjava.script.PrecisionRecallGraphDataGenerator;
  */
 public class OMTools {
 
-	public final static String version = "OMTools Version 1.2a";
+	public final static String version = "OMTools Version 1.3";
 	public final static String author = "Alden Leung";
 	
 	private static void displayOptions() throws IOException, MapperConstructionException {		
@@ -75,6 +76,8 @@ public class OMTools {
 		System.out.println("\\part{Simulation}");
 		OptMapDataGenerator.main(arg);
 		RandomReferenceGenerator.main(arg);
+		System.out.println("\\part{SV Detection}");
+		SVDetection.main(arg);
 		System.out.println("\\part{Fasta Tools}");
 		FastaToOM.main(arg);
 		System.out.println("\\part{Data Tools}");
@@ -106,10 +109,12 @@ public class OMTools {
 			System.out.println("OMBlastMapper");
 			System.out.println("OMHAMapper");
 			System.out.println("OMFMMapper");
-			System.out.println("PairwiseAlignment");			
+			System.out.println("PairwiseAlignment");
 			System.out.println("============== Simulation ==============");
 			System.out.println("OptMapDataGenerator");
 			System.out.println("RandomReferenceGenerator");
+			System.out.println("============== SV Detection ==============");
+			System.out.println("SVDetection");
 			System.out.println("============= Fasta Tools ==============");
 			System.out.println("FastaToOM");
 			System.out.println("============== Data Tools ===============");
@@ -122,6 +127,9 @@ public class OMTools {
 			System.out.println("ResultMerger");
 			System.out.println("ResultStatistics");
 			System.out.println("PrecisionRecallGraphDataGenerator");
+			System.out.println("============= Multiple Alignment ==============");
+			System.out.println("MultipleAlignment");
+			System.out.println("BlockConnectionGraphGeneration");
 			System.out.println("=============== Visualization ================");
 			System.out.println("OMView");
 		}
@@ -164,6 +172,10 @@ public class OMTools {
 					break;
 				case "pairwisealignment":
 					PairwiseAlignment.main(arg);
+					break;
+				// SVDetection
+				case "svdetection":
+					SVDetection.main(arg);
 					break;
 				// Visualizer
 				case "omview":

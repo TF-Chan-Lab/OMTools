@@ -43,7 +43,7 @@ public class VTranslocation extends VSpace {
 	private GenomicPosNode region;
 
 	public VTranslocation(GenomicPosNode region, int direction) {
-		super(ViewSetting.minSVObjectSize, 0);
+		super(ViewSetting.SVObjectSize, 0);
 		this.direction = direction;
 		this.region = region;
 		this.setToolTipText(String.format("%s: %s", this.getType(), region.toString()));
@@ -60,8 +60,8 @@ public class VTranslocation extends VSpace {
 		Graphics2D g = (Graphics2D) graphics;
 		g.setStroke(new BasicStroke(2));
 		g.setPaint(Color.BLACK);
-		int lineWidth = (int) (ViewSetting.minSVObjectSize * 2 / 5 / dnaRatio * ratio);
-		int recWidth = (int) (ViewSetting.minSVObjectSize * 3 / 5 / dnaRatio * ratio);
+		int lineWidth = (int) (ViewSetting.SVObjectSize * 2 / 5 / dnaRatio * ratio);
+		int recWidth = (int) (ViewSetting.SVObjectSize * 3 / 5 / dnaRatio * ratio);
 		if (direction == 1) {
 			g.drawLine(0, this.getHeight() / 5 * 2, lineWidth, this.getHeight() / 5 * 2);
 			g.drawLine(0, this.getHeight() / 5 * 3, lineWidth, this.getHeight() / 5 * 3);

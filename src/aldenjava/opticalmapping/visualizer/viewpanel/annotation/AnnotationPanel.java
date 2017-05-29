@@ -36,6 +36,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.swing.JMenuItem;
+
 import aldenjava.opticalmapping.GenomicPosNode;
 import aldenjava.opticalmapping.data.annotation.AnnotationNode;
 import aldenjava.opticalmapping.visualizer.OMView;
@@ -188,4 +190,12 @@ public class AnnotationPanel extends ViewPanel {
 		this.loadAnnotation(annoList);
 	}
 
+	@Override
+	protected JMenuItem getGotoMenu() {
+		JMenuItem gotoPage = new JMenuItem("Goto...");
+		gotoPage.setEnabled(false);
+		return gotoPage;	
+	}
+
+	
 }

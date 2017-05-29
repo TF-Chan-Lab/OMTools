@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import aldenjava.opticalmapping.GenomicPosNode;
@@ -156,4 +157,12 @@ public AlignmentView(OMView mainView) {
 	public void setAnchorPoint(GenomicPosNode anchorPoint) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
+	
+	@Override
+	protected JMenuItem getGotoMenu() {
+		JMenuItem gotoPage = new JMenuItem("Goto...");
+		gotoPage.setEnabled(false);
+		return gotoPage;
+	}
+
 }

@@ -50,6 +50,7 @@ import aldenjava.opticalmapping.data.mappingresult.OptMapResultNode;
 import aldenjava.opticalmapping.data.mappingresult.ResultsBreaker;
 import aldenjava.opticalmapping.mapper.clustermodule.ResultClusterModule;
 import aldenjava.opticalmapping.multiplealignment.CollinearBlock;
+import aldenjava.opticalmapping.multiplealignment.CollinearBlockOrder;
 
 
 public class DataModule extends JComponent {
@@ -59,7 +60,7 @@ public class DataModule extends JComponent {
 	private LinkedHashMap<String, LinkedHashMap<String, DataNode>> referenceInfoMap = new LinkedHashMap<String, LinkedHashMap<String, DataNode>>();
 	private LinkedHashMap<String, LinkedHashMap<String, List<List<OptMapResultNode>>>> resultInfoMap = new LinkedHashMap<String, LinkedHashMap<String, List<List<OptMapResultNode>>>>();
 	private LinkedHashMap<String, LinkedHashMap<String, CollinearBlock>> multipleAlignmentInfoMap = new LinkedHashMap<String, LinkedHashMap<String, CollinearBlock>>();
-	private LinkedHashMap<String, List<String>> multipleAlignmentOrderInfoMap = new LinkedHashMap<String, List<String>>();
+	private LinkedHashMap<String, CollinearBlockOrder> multipleAlignmentOrderInfoMap = new LinkedHashMap<String, CollinearBlockOrder>();
 	private LinkedHashMap<String, LinkedHashMap<String, Color>> multipleAlignmentColorInfoMap = new LinkedHashMap<String, LinkedHashMap<String, Color>>();
 	private LinkedHashMap<String, List<? extends AnnotationNode>> annoInfoMap = new LinkedHashMap<String, List<? extends AnnotationNode>>();
 
@@ -151,7 +152,7 @@ public class DataModule extends JComponent {
 		multipleAlignmentInfoMap.put(filename, multipleAlignment);
 		this.firePropertyChange("MultipleAlignment", "", filename);
 	}
-	public void addMultipleAlignmentOrder(String filename, List<String> multipleAlignmentOrder) {
+	public void addMultipleAlignmentOrder(String filename, CollinearBlockOrder multipleAlignmentOrder) {
 		filename = getSimpleFileName(filename);
 		if (multipleAlignmentOrderInfoMap.containsKey(filename))
 			return;
@@ -272,7 +273,7 @@ public class DataModule extends JComponent {
 	public LinkedHashMap<String, CollinearBlock> getMultipleAlignmentBlock(String filename) {
 		return multipleAlignmentInfoMap.get(filename);
 	}
-	public List<String> getMultipleAlignmentOrder(String filename) {
+	public CollinearBlockOrder getMultipleAlignmentOrder(String filename) {
 		return multipleAlignmentOrderInfoMap.get(filename);
 	}
 	public LinkedHashMap<String, Color> getMultipleAlignmentColor(String filename) {

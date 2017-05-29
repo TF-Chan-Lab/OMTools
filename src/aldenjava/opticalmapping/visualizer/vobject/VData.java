@@ -223,8 +223,6 @@ public class VData extends VObject {
 			else
 				start = (loc.min - startEndPoint.min + 1) * scale / dnaRatio * ratio;
 			double len = loc.length() * scale / dnaRatio * ratio;
-//			System.out.println(loc + "\t" + start + "\t" + len + "\t" + color.toString());
-//			g.setPaint(new Color(new Random().nextInt(256),new Random().nextInt(256),new Random().nextInt(256)));
 			g.fill(new Rectangle2D.Double(start, 0, len, this.getHeight()));
 		}
 

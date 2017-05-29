@@ -33,34 +33,43 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.Line2D;
 
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 
-public class VRearrangement extends VObject {
-
-	@Override
-	public long getDNALength() {
-		return ViewSetting.minSVObjectSize;
+public class VRearrangement extends VSpace {
+	// Temporarily make it the same as VInversion, except the getType returns Rearrangement
+	
+	public VRearrangement(long reflength, long mollength) {
+		super(reflength, mollength);
+		this.setToolTipText(String.format("%s", this.getType()));
 	}
 
 	@Override
 	public void autoSetSize() {
-		int width = (int) (ViewSetting.minSVObjectSize / dnaRatio * ratio);
-		this.setSize(width, width);
+		this.setSize(Math.max((int) (reflength / dnaRatio * ratio), (int) (ViewSetting.SVObjectSize / dnaRatio * ratio)), (int) (ViewSetting.bodyHeight * ratio));
 	}
 
 	@Override
 	public void paintComponent(Graphics graphics) {
 		super.paintComponent(graphics);
 		Graphics2D g = (Graphics2D) graphics;
-		g.setStroke(new BasicStroke(2));
+		g.setStroke(new BasicStroke((float) (2 * ratio)));
 		g.setPaint(Color.BLACK);
-		int width = (int) (ViewSetting.minSVObjectSize / dnaRatio * ratio);
-		g.drawArc(0, width / 2 - width / 2, width, width, 180, 360);
+		
+		double refSpaceWidth = (reflength / dnaRatio * ratio);
+		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
+		g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
+		
+		int midPtY = this.getHeight() / 2;
+		int arcSize = (int) (ViewSetting.SVObjectSize / dnaRatio * ratio);
+		g.drawArc((int) (midPtX - arcSize / 4), midPtY - arcSize / 4, arcSize / 2, arcSize / 2, 180, 360);
+		
 	}
 
 	@Override
-	public void reorganize() {
+	public String getType() {
+		return "Rearrangment";
 	}
 
 }

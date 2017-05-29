@@ -40,14 +40,10 @@ import aldenjava.opticalmapping.visualizer.ViewSetting;
 public class VRuler extends VObject{
 
 	private SimpleLongLocation startEndPoint;
-	public static long smallMark = 10000;
-	public static long largeMark = 100000;
-	public static boolean display = true;
 	private boolean reverse;
 	private double scale;
 	private boolean invert = false;
-	public VRuler() 
-	{
+	public VRuler() {
 		this.setSize(0, 0);
 		this.reverse = false;
 		this.scale = 1.000000000;
@@ -87,7 +83,7 @@ public class VRuler extends VObject{
 	{
 		if (startEndPoint == null)
 			return;
-		if (!VRuler.display)
+		if (!ViewSetting.displayRuler)
 			return;
 		
 		Graphics2D g = (Graphics2D) graphics;
@@ -105,36 +101,36 @@ public class VRuler extends VObject{
 		
     	long mark;
     	// Small marks
-    	g.setColor(new Color(127, 127, 127));
+    	g.setColor(ViewSetting.rulerSmallMarkColor);
     	g.setStroke(new BasicStroke(3));
     	if (!reverse)
     	{
-    		mark = startEndPoint.min / smallMark * smallMark; 
+    		mark = startEndPoint.min / ViewSetting.rulerSmallMark * ViewSetting.rulerSmallMark; 
 	    	while (mark < startEndPoint.max)
 	    	{
 	    		if (mark >= startEndPoint.min)
 	    			g.drawLine((int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy - markHeight, (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy);
-	    		mark += smallMark;
+	    		mark += ViewSetting.rulerSmallMark;
 	    	}
     	}
     	else
     	{
-    		mark = (startEndPoint.max / smallMark + 1) * smallMark; // is there bug?
+    		mark = (startEndPoint.max / ViewSetting.rulerSmallMark + 1) * ViewSetting.rulerSmallMark; // is there bug?
 	    	while (mark > startEndPoint.min)
 	    	{
 	    		if (mark <= startEndPoint.max)
 	    			g.drawLine((int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy - markHeight, (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy);
-	    		mark -= smallMark;
+	    		mark -= ViewSetting.rulerSmallMark;
 	    		
 	    	}
     	}
     	
     	// Large marks
-		g.setColor(Color.BLACK);
+		g.setColor(ViewSetting.rulerLargeMarkColor);
     	g.setStroke(new BasicStroke(5));
     	if (!reverse)
     	{
-    		mark = startEndPoint.min / largeMark * largeMark;
+    		mark = startEndPoint.min / ViewSetting.rulerLargeMark * ViewSetting.rulerLargeMark;
     		while (mark < startEndPoint.max)
         	{
         		if (mark >= startEndPoint.min)
@@ -142,12 +138,12 @@ public class VRuler extends VObject{
     				g.drawLine((int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy - markHeight, (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), vy);
     				g.drawString(String.format("%d", mark), (int) (vx + (mark - startEndPoint.min) / dnaRatio * ratio * scale), textCoordinateY);
         		}
-    	    	mark += largeMark;
+    	    	mark += ViewSetting.rulerLargeMark;
         	}
     	}
     	else
     	{
-    		mark = startEndPoint.max / largeMark * largeMark;
+    		mark = startEndPoint.max / ViewSetting.rulerLargeMark * ViewSetting.rulerLargeMark;
 	    	while (mark > startEndPoint.min)
         	{
 	    		if (mark <= startEndPoint.max)
@@ -155,12 +151,12 @@ public class VRuler extends VObject{
     				g.drawLine((int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy - 5, (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), vy);
     				g.drawString(String.format("%d", mark), (int) (vx + (startEndPoint.max - mark) / dnaRatio * ratio * scale), textCoordinateY);
         		}
-    	    	mark -= largeMark;
+    	    	mark -= ViewSetting.rulerLargeMark;
         	}
     	}
     	
     	// Horizontal Bar
-		g.setColor(Color.BLACK);
+		g.setColor(ViewSetting.rulerBodyColor);
     	g.setStroke(new BasicStroke(5));
 		g.drawLine(vx, vy, (int) (vx + (startEndPoint.length()) / dnaRatio * ratio * scale), vy);
 

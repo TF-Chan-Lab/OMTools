@@ -45,25 +45,25 @@ public class CollinearBlockReader extends OMReader<CollinearBlock> {
 	private String[] queries;
 	public CollinearBlockReader(String filename) throws IOException {
 		super(filename);
-		readHeader();
+//		readHeader();
 	}
 	public CollinearBlockReader(InputStream stream) throws IOException {
 		super(stream);
-		readHeader();
+//		readHeader();
 	}
 
 	public CollinearBlockReader(OptionSet options) throws IOException {
 		this((String) options.valueOf("cblin"));
 	}
-	private void readHeader() throws IOException {
-		String header = nextline;
-		this.queries = header.trim().split("\\t");
-		proceedNextLine();
-	}
-	
-	public List<String> getQueries() {
-		return Arrays.asList(queries);
-	}
+//	private void readHeader() throws IOException {
+//		String header = nextline;
+//		this.queries = header.trim().split("\\t");
+//		proceedNextLine();
+//	}
+//	
+//	public List<String> getQueries() {
+//		return Arrays.asList(queries);
+//	}
 	
 	@Override
 	public CollinearBlock read() throws IOException {
@@ -71,14 +71,15 @@ public class CollinearBlockReader extends OMReader<CollinearBlock> {
 			return null;
 		String[] l = nextline.split("\\t", -1);
 		String name = l[0];
-		if (l.length != queries.length + 1)
-			throw new RuntimeException("Fail to match the number of queries to the groups in the entry.");
+		String[] ll = l[1].split(";");
 		LinkedHashMap<String, VPartialMoleculeInfo> groups = new LinkedHashMap<>();
-		for (int i = 1; i < l.length; i++) {
-			if (l[i].isEmpty())
+		for (int i = 0; i < ll.length; i++) {
+			if (ll[i].isEmpty())
 				continue;
+			String[] entry = ll[i].split(":");
+			String query = entry[0];
 			boolean reverse;
-			switch (l[i].substring(l[i].length() - 1)) {
+			switch (entry[1].substring(entry[1].length() - 1)) {
 				case "+": 
 				case "F": 
 				case "f":
@@ -90,17 +91,48 @@ public class CollinearBlockReader extends OMReader<CollinearBlock> {
 					reverse = true;
 					break;
 				default:
-					throw new IllegalArgumentException("Incorrect group info format: " + l[i]);
+					throw new IllegalArgumentException("Incorrect group info format: " + entry[1]);
 			}
-			String[] startstop = l[i].substring(0, l[i].length() - 1).split("-");
+			String[] startstop = entry[1].substring(0, entry[1].length() - 1).split("-");
 			int start = Integer.parseInt(startstop[0]);
 			int stop = Integer.parseInt(startstop[1]);
 			if ((stop > start && reverse) || (start > stop && !reverse))
-				throw new IllegalArgumentException("The indicated orientation is opposite to the orientation suggested by the start and stop signals: " + l[i]);
-			
-			groups.put(queries[i - 1], new VPartialMoleculeInfo(start, stop));
+				throw new IllegalArgumentException("The indicated orientation is opposite to the orientation suggested by the start and stop signals: " + entry[1]);
+			groups.put(query, new VPartialMoleculeInfo(start, stop));
 		}
 		proceedNextLine();
+//		String[] l = nextline.split("\\t", -1);
+//		String name = l[0];
+//		if (l.length != queries.length + 1)
+//			throw new RuntimeException("Fail to match the number of queries to the groups in the entry.");
+//		LinkedHashMap<String, VPartialMoleculeInfo> groups = new LinkedHashMap<>();
+//		for (int i = 1; i < l.length; i++) {
+//			if (l[i].isEmpty())
+//				continue;
+//			boolean reverse;
+//			switch (l[i].substring(l[i].length() - 1)) {
+//				case "+": 
+//				case "F": 
+//				case "f":
+//					reverse = false;
+//					break;
+//				case "-": 
+//				case "R": 
+//				case "r":
+//					reverse = true;
+//					break;
+//				default:
+//					throw new IllegalArgumentException("Incorrect group info format: " + l[i]);
+//			}
+//			String[] startstop = l[i].substring(0, l[i].length() - 1).split("-");
+//			int start = Integer.parseInt(startstop[0]);
+//			int stop = Integer.parseInt(startstop[1]);
+//			if ((stop > start && reverse) || (start > stop && !reverse))
+//				throw new IllegalArgumentException("The indicated orientation is opposite to the orientation suggested by the start and stop signals: " + l[i]);
+//			
+//			groups.put(queries[i - 1], new VPartialMoleculeInfo(start, stop));
+//		}
+//		proceedNextLine();
 		return new CollinearBlock(name, groups);
 	}
 	
@@ -111,6 +143,7 @@ public class CollinearBlockReader extends OMReader<CollinearBlock> {
 		while ((block = cbr.read()) != null) {
 			map.put(block.name, block);
 		}
+		cbr.close();
 		return map;
 	}
 
@@ -121,7 +154,8 @@ public class CollinearBlockReader extends OMReader<CollinearBlock> {
 		while ((block = cbr.read()) != null) {
 			map.put(block.name, block);
 		}
-		return map;
+		cbr.close();
+		return map;		
 	}
 
 	public static void assignOptions(ExtendOptionParser parser, int level) {

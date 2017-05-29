@@ -29,6 +29,7 @@
 
 package aldenjava.opticalmapping.visualizer.viewpanel;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
@@ -138,6 +139,11 @@ public class MoleculeView extends ViewPanel {
 			VMolecule vmole = new VMolecule(data);
 			vmole.setToolTipText(data.name + ": Signal=" + data.getTotalSignal() + "; Size=" + data.size);
 
+			if (OMView.dataColorMap.containsKey(data.name)) {
+				for (int i = 0; i < data.getTotalSegment(); i++)	
+					if (OMView.dataColorMap.get(data.name).contains(i))
+						vmole.addRegionColor(new SimpleLongLocation(i==0?1:data.refp[i - 1], i==data.getTotalSegment()-1?data.size:data.refp[i]), Color.BLUE);
+			}
 			vmoleList.add(vmole);
 			this.add(vmole);
 			if (data.size > maxLength)
@@ -183,6 +189,84 @@ public class MoleculeView extends ViewPanel {
 	public void setAnchorPoint(GenomicPosNode anchorPoint) {
 		throw new UnsupportedOperationException();
 
+	}
+
+	@Override
+	protected JMenuItem getGotoMenu() {
+		if (dataList == null) {
+			JMenuItem gotoPage = new JMenu("Goto");
+			gotoPage.setEnabled(false);
+			return gotoPage;
+		}
+		
+		JMenuItem gotoPage = new JMenu("Goto");
+		JMenuItem previousPage = new JMenuItem("Previous");
+		previousPage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updatePage(page - 1);
+			}
+		});
+		JMenuItem nextPage = new JMenuItem("Next");
+		nextPage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updatePage(page + 1);
+			}
+		});
+
+		JMenuItem specificPage = new JMenuItem("Page...");
+		specificPage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String ans = JOptionPane.showInputDialog(mainView, "Please input page (1-" + ((dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1) + ")", page);
+				if (ans != null) 
+					try {
+						int page = Integer.parseInt(ans);	
+						if (page < 1 || (page > (dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1))
+							System.err.println("Page out of range");
+						else
+							updatePage(page);
+					} catch (NumberFormatException e) {
+						System.err.println("Page should be a number");
+					}
+
+				
+			}
+		});
+		if (dataList.isEmpty()) {
+			previousPage.setEnabled(false);
+			nextPage.setEnabled(false);
+			specificPage.setEnabled(false);
+		} else {
+			if (page <= 1)
+				previousPage.setEnabled(false);
+			if (page >= (dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1)
+				nextPage.setEnabled(false);
+		}
+
+		
+		gotoPage.add(previousPage);
+		gotoPage.add(nextPage);
+		gotoPage.add(specificPage);
+
+//		gotoPage.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent arg0) {
+//				String ans = JOptionPane.showInputDialog(mainView, "Please input page (1-" + ((dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1) + ")", page);
+//				if (ans != null) 
+//					try {
+//						int page = Integer.parseInt(ans);	
+//						if (page < 1 || (page > (dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1))
+//							System.err.println("Page out of range");
+//						else
+//							updatePage(page);
+//					} catch (NumberFormatException e) {
+//						System.err.println("Page should be a number");
+//					}
+//			}
+//		});
+		return gotoPage;	
 	}
 
 	@Override
@@ -251,55 +335,6 @@ public class MoleculeView extends ViewPanel {
 		menu.add(sortMenu);
 		
 		
-		JMenuItem previousPage = new JMenuItem("Previous");
-		previousPage.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updatePage(page - 1);
-			}
-		});
-		JMenuItem nextPage = new JMenuItem("Next");
-		nextPage.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updatePage(page + 1);
-			}
-		});
-
-		JMenuItem gotoPage = new JMenuItem("Goto...");
-		gotoPage.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				String ans = JOptionPane.showInputDialog(mainView, "Please input page (1-" + ((dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1) + ")", page);
-				if (ans != null) 
-					try {
-						int page = Integer.parseInt(ans);	
-						if (page < 1 || (page > (dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1))
-							System.err.println("Page out of range");
-						else
-							updatePage(page);
-					} catch (NumberFormatException e) {
-						System.err.println("Page should be a number");
-					}
-
-				
-			}
-		});
-		if (dataList.isEmpty()) {
-			previousPage.setEnabled(false);
-			nextPage.setEnabled(false);
-			gotoPage.setEnabled(false);
-		} else {
-			if (page <= 1)
-				previousPage.setEnabled(false);
-			if (page >= (dataList.size() - 1) / ViewSetting.maxMoleculeViewItems + 1)
-				nextPage.setEnabled(false);
-		}
-
-		
-		menu.add(previousPage);
-		menu.add(nextPage);
-		menu.add(gotoPage);
 		
 	}
 

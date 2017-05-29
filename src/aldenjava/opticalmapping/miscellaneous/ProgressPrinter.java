@@ -77,4 +77,22 @@ public class ProgressPrinter {
 			}
 		}
 	}
+	public void update(String msg) {
+		if (totalSteps != null && step == totalSteps) {
+			VerbosePrinter.println(msg);
+			return;
+		}
+		
+		if (millisecond != null) {
+			if (System.currentTimeMillis() - prevPrintTime >= millisecond) {
+				VerbosePrinter.println(msg);
+				prevPrintTime = System.currentTimeMillis();
+			}
+		}
+		if (leap != null) {
+			if (step % leap == 0) {
+				VerbosePrinter.println(msg);
+			}
+		}
+	}
 }

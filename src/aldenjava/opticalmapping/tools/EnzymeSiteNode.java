@@ -114,14 +114,20 @@ public class EnzymeSiteNode {
 	public boolean isPalindromic() {
 		return (getForwardSeq().equalsIgnoreCase(getReverseSeq()));
 	}
-	public static EnzymeSiteNode getEnzyme(String enzymeName) {
+	public static EnzymeSiteNode getEnzyme(String enzymeName) throws EnzymeNotFoundException {
+		if (!EnzymeSiteNode.ENZYMEMAP.containsKey(enzymeName))
+			throw new EnzymeNotFoundException();
 		return EnzymeSiteNode.ENZYMEMAP.get(enzymeName);
 	}
 
 	public static List<EnzymeSiteNode> getEnzyme(List<String> enzymeNameList) {
 		List<EnzymeSiteNode> enzymeList = new ArrayList<EnzymeSiteNode>();
 		for (String enzymeName : enzymeNameList)
-			enzymeList.add(getEnzyme(enzymeName));
+			try {
+				enzymeList.add(getEnzyme(enzymeName));
+			} catch (EnzymeNotFoundException e)	{
+				System.err.println("Enzyme " + enzymeName + " is not found. Note that enzyme names are case sensitive.");
+			}
 		return enzymeList;
 	}
 
@@ -155,7 +161,11 @@ public class EnzymeSiteNode {
 
 	public static void assignOptions(ExtendOptionParser parser) {
 		parser.addHeader("Enzyme Input Options", 1);
-		parser.accepts("enzyme", "Built-in enzymes " + getSupportedEnzymes()).withRequiredArg().ofType(String.class);
+		parser.accepts("enzyme", "Built-in enzymes " + getSupportedEnzymes() + " (Support multiple enzymes input)").withRequiredArg().ofType(String.class);
 		parser.accepts("enzymestring", "Enzyme sequence (e.g. GCTCTTC)").withRequiredArg().ofType(String.class);
 	}
+}
+
+class EnzymeNotFoundException extends RuntimeException {
+	
 }

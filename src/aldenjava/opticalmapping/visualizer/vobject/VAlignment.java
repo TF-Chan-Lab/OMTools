@@ -96,7 +96,6 @@ public class VAlignment extends VObject{
 				resultlist = VUtils.modifyResultOnRef(resultlist, ref);
 			else
 				resultlist = VUtils.modifyAllReverseOnRef(resultlist, ref);
-//		else
 		this.resultlist = resultlist;
 		
 		// Save all reverse and scaling information modification

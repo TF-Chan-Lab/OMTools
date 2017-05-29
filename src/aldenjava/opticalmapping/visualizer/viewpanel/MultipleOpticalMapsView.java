@@ -31,8 +31,10 @@ package aldenjava.opticalmapping.visualizer.viewpanel;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -40,13 +42,14 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
@@ -54,44 +57,58 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import aldenjava.common.ElementsGroup;
+import aldenjava.common.IntegerKeyFactory;
 import aldenjava.common.SimpleLongLocation;
-import aldenjava.file.ListExtractor;
+import aldenjava.common.UnweightedRange;
+import aldenjava.common.WeightedRange;
 import aldenjava.opticalmapping.GenomicPosNode;
 import aldenjava.opticalmapping.data.MultipleAlignmentFormat;
 import aldenjava.opticalmapping.data.annotation.AnnotationNode;
 import aldenjava.opticalmapping.data.data.DataNode;
+import aldenjava.opticalmapping.miscellaneous.ProgressPrinter;
 import aldenjava.opticalmapping.miscellaneous.VerbosePrinter;
 import aldenjava.opticalmapping.multiplealignment.CollinearBlock;
-import aldenjava.opticalmapping.multiplealignment.CollinearBlockWriter;
+import aldenjava.opticalmapping.multiplealignment.CollinearBlockOrder;
 import aldenjava.opticalmapping.multiplealignment.GroupingEntry;
 //import aldenjava.opticalmapping.multiplealignment.MultipleAlignment;
 import aldenjava.opticalmapping.visualizer.OMView;
 import aldenjava.opticalmapping.visualizer.VDataType;
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 import aldenjava.opticalmapping.visualizer.utils.VPartialMoleculeInfo;
+import aldenjava.opticalmapping.visualizer.vobject.VCoverage;
 import aldenjava.opticalmapping.visualizer.vobject.VIndel;
-import aldenjava.opticalmapping.visualizer.vobject.VInversion;
 import aldenjava.opticalmapping.visualizer.vobject.VMolecule;
 import aldenjava.opticalmapping.visualizer.vobject.VMultiAlignMolecule;
 import aldenjava.opticalmapping.visualizer.vobject.VObject;
+import aldenjava.opticalmapping.visualizer.vobject.VRearrangement;
 import aldenjava.opticalmapping.visualizer.vobject.VRuler;
 import aldenjava.opticalmapping.visualizer.vobject.VSpace;
+import aldenjava.opticalmapping.visualizer.vobject.VVariability;
 
 public class MultipleOpticalMapsView extends ViewPanel {
 
 	private VRuler ruler;
-
+	private VCoverage vcov;
+	private VVariability vvar;
+	
 	private LinkedHashMap<String, CollinearBlock> collinearBlocks;
-	private List<String> orders; // Order of optical map
+	private CollinearBlockOrder orders; // Order of optical map
 	private LinkedHashMap<String, Color> colors; // Color options for group
 	private List<AnnotationNode> annotations;
 	private LinkedHashMap<String, DataNode> dataInfo;
 	private LinkedHashMap<String, List<VObject>> objectListMap = new LinkedHashMap<>();
-	private LinkedHashMap<String, List<VObject>> rearrangementListMap = new LinkedHashMap<>();
-	private LinkedHashMap<String, List<Long>> rearrangementPosListMap = new LinkedHashMap<>();
+	private LinkedHashMap<String, VMultiAlignMapMolecule> vammMap = new LinkedHashMap<>();
+	private LinkedHashMap<String, Point> nameLocations = new LinkedHashMap<>();
 	private LinkedHashMap<String, SimpleLongLocation> annotationMap = new LinkedHashMap<>();
 	private LinkedHashMap<String, Color> colorMap;
+	private List<Integer> groupRowPos;
+	private List<Integer> groupRowHeight;
 	private Long seed = null;
+	private int lineNo = 0;
+
+	LinkedHashMap<String, Long> groupStartPos;
+	LinkedHashMap<String, Long> groupDNALengths;
 	// to solve (1) rearrangement reorganize
 	// to solve (2) rearrangement display
 	
@@ -115,29 +132,35 @@ public class MultipleOpticalMapsView extends ViewPanel {
 	
 	@Override
 	public void setDNARatio(double dnaRatio) {
-		if (!(ruler == null || orders == null || objectListMap == null || rearrangementListMap == null)) {
+		if (!(ruler == null || orders == null || vammMap == null)) {
 	
 			ruler.setDNARatio(dnaRatio);
-			for (String name : objectListMap.keySet()) {
-				for (VObject vobj : objectListMap.get(name))
-					vobj.setDNARatio(dnaRatio);
-				for (VObject vobj : rearrangementListMap.get(name))
-					vobj.setDNARatio(dnaRatio);
-			}
+			vcov.setDNARatio(dnaRatio);
+			vvar.setDNARatio(dnaRatio);
+//			for (String name : objectListMap.keySet()) {
+//				for (VObject vobj : objectListMap.get(name))
+//					vobj.setDNARatio(dnaRatio);
+//			}
+			for (VMultiAlignMapMolecule vamm : vammMap.values()) {
+				vamm.setDNARatio(dnaRatio);
+			}	
 		}
 		super.setDNARatio(dnaRatio);
 	}
 
 	@Override
 	public void setRatio(double ratio) {
-		if (!(ruler == null || orders == null || objectListMap == null || rearrangementListMap == null)) {
+		if (!(ruler == null || orders == null || vammMap == null)) {
 			ruler.setRatio(ratio);
-			for (String name : objectListMap.keySet()) {
-				for (VObject vobj : objectListMap.get(name))
-					vobj.setRatio(ratio);
-				for (VObject vobj : rearrangementListMap.get(name))
-					vobj.setRatio(ratio);
-			}
+			vcov.setRatio(ratio);
+			vvar.setRatio(ratio);
+//			for (String name : objectListMap.keySet()) {
+//				for (VObject vobj : objectListMap.get(name))
+//					vobj.setRatio(ratio);
+//			}
+			for (VMultiAlignMapMolecule vamm : vammMap.values()) {
+				vamm.setRatio(ratio);
+			}	
 		}
 		super.setRatio(ratio);
 	}
@@ -191,6 +214,15 @@ public class MultipleOpticalMapsView extends ViewPanel {
 		else
 			colors = null;
 		annotations = mainView.dataModule.getAllAnno();
+		
+		if (collinearBlocks != null && orders == null) {
+			Set<String> set = new HashSet<>();
+			for (CollinearBlock block : collinearBlocks.values())
+				set.addAll(block.groups.keySet());
+			List<String> deducedOrder = new ArrayList<String>(set);
+			orders = new CollinearBlockOrder(deducedOrder);
+		}
+			
 		if (dataInfo.isEmpty() || collinearBlocks == null || collinearBlocks.isEmpty() || orders == null)
 			createEmptyPanel();
 		else
@@ -198,55 +230,72 @@ public class MultipleOpticalMapsView extends ViewPanel {
 	}
 
 	
-	private void createMolecules() {
+	private void createMolecules() {		
 		this.setVisible(false);
 		VerbosePrinter.println("Removing old Vobjects...");
 		if (objectListMap != null)
 			for (String name : objectListMap.keySet())
 				for (VObject vobj : objectListMap.get(name))
 					this.remove(vobj);
-		if (rearrangementListMap != null)
-			for (String name : rearrangementListMap.keySet())
-				for (VObject vobj : rearrangementListMap.get(name))
-					this.remove(vobj);
+		if (vammMap != null)
+			for (String name : vammMap.keySet())
+				this.remove(vammMap.get(name));
+		vammMap.clear();
 		colorMap = null;
 		
 		VerbosePrinter.println("Initializing panels and lists...");
-		LinkedHashMap<String, List<VMolecule>> vmoleGroups = new LinkedHashMap<>();	
+		LinkedHashMap<String, List<VMultiAlignMolecule>> vmoleGroups = new LinkedHashMap<>();
+//		LinkedHashMap<String, CoverageInfo> covMap = new LinkedHashMap<>();
 		
 		objectListMap = new LinkedHashMap<>();
-		rearrangementListMap = new LinkedHashMap<>();
-		rearrangementPosListMap = new LinkedHashMap<>();
+		// Layout of an entry in objectListMap
+		// VMolecule, VSpace 1, VSpace 2, VMolecule, VSpace 1, VSpace2, ..... VMolecule, VSpace 1		
+		
 		annotationMap = new LinkedHashMap<>();
+		// Last position on the panel
 		LinkedHashMap<String, Long> lastPos = new LinkedHashMap<>();
+		// Last block of the contig. Used in adjusting layout.
+		LinkedHashMap<String, String> lastBlock = new LinkedHashMap<>();
+		// Last signal of the contig. Used to determine whether rearrangement occurs.
 		LinkedHashMap<String, Integer> lastSig = new LinkedHashMap<>();
-		for (String name : orders) {
+		
+		List<String> individualOrder = orders.getIndividualOrder();
+		for (String name : individualOrder) {
 			objectListMap.put(name, new ArrayList<VObject>());
-			rearrangementListMap.put(name, new ArrayList<VObject>());
-			rearrangementPosListMap.put(name, new ArrayList<Long>());
 			lastPos.put(name, 0L);
 			lastSig.put(name, -1);
 		}
+		groupStartPos = new LinkedHashMap<>();
+		groupDNALengths = new LinkedHashMap<>();
+		
+		// The list of previous blocks
+		HashMap<String, HashSet<String>> prevBlocks = new HashMap<>();
+		HashMap<String, HashSet<String>> nextBlocks = new HashMap<>();
 		
 		VerbosePrinter.println("Laying out collinear blocks...");
+		ProgressPrinter layoutProgress = new ProgressPrinter(collinearBlocks.size(), 10000L);
 		for (String group : collinearBlocks.keySet()) {
-//			Color color; 
-//			if (colors != null)
-//				color = colors.get(group);
-//			else {
-//				float r = rand.nextFloat() / 2f + 0.5f;
-//				float g = rand.nextFloat() / 2f + 0.5f;
-//				float b = rand.nextFloat() / 2f + 0.5f;
-//				color = new Color(r, g, b);
-//			}
-			vmoleGroups.put(group, new ArrayList<VMolecule>());
 			LinkedHashMap<String, VPartialMoleculeInfo> map = collinearBlocks.get(group).groups;
+			
+			// Parse the last block to assign list of previous blocks
+			HashSet<String> prevBlockSet = new HashSet<>();
+			for (String name : map.keySet()) {
+				if (lastBlock.containsKey(name))
+					prevBlockSet.add(lastBlock.get(name));
+				lastBlock.put(name, group);
+			}
+			prevBlocks.put(group, prevBlockSet);
+
+			nextBlocks.put(group, new HashSet<String>());
+			for (String prevBlock : prevBlockSet)
+				nextBlocks.get(prevBlock).add(group);
+			// Parse the last block position
 			long maxLastPos = Long.MIN_VALUE;
 			for (String name : map.keySet())
 				if (lastPos.get(name) > maxLastPos)
 					maxLastPos = lastPos.get(name);
-			
-			// Calculate groupDNALength now
+
+			// Calculate groupDNALength as the maximum block length 
 			long groupDNALength = -1;
 			for (String name : map.keySet()) {
 				VPartialMoleculeInfo pmi = map.get(name);
@@ -255,33 +304,20 @@ public class MultipleOpticalMapsView extends ViewPanel {
 				if (length > groupDNALength)
 					groupDNALength = length;
 			}
-			
+			groupStartPos.put(group, maxLastPos);
+			groupDNALengths.put(group, groupDNALength);
+			vmoleGroups.put(group, new ArrayList<VMultiAlignMolecule>());
 			for (String name : map.keySet()) {
 //				long spacelen = maxLastPos - lastPos.get(name) - 1;
 				long spacelen = maxLastPos - lastPos.get(name);
 				assert spacelen >= 0;
 				VPartialMoleculeInfo pmi = map.get(name);
 
-
-//				if (spacelen > 0) {
-//					if (pmi.startSig == 0)
-//					if (lastPos.get(name) == 0)
-//						objectListMap.get(name).add(new VSpace(spacelen, 0));
-//					else
-//						objectListMap.get(name).add(new VIndel(spacelen, 0));
-//				}
-
-					
 				if (lastSig.get(name) != -1 && lastSig.get(name) != pmi.startSig) {
-//					rearrangementListMap.get(name).add(new VRearrangement());
-//					rearrangementPosListMap.get(name).add(lastPos.get(name) + spacelen / 2 - ViewSetting.minSVObjectSize / 2);
-					objectListMap.get(name).add(new VInversion(spacelen, 0));
+					objectListMap.get(name).add(new VRearrangement(spacelen, 0));
 				}
 				else
-					if (lastPos.get(name) == 0)
-						objectListMap.get(name).add(new VSpace(spacelen, 0));
-					else
-						objectListMap.get(name).add(new VIndel(spacelen, 0));
+					objectListMap.get(name).add(new VIndel(spacelen, 0));
 
 	
 					
@@ -293,7 +329,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 				else
 					pos = new GenomicPosNode(data.name, data.refp[pmi.stopSig], data.refp[pmi.startSig]);
 				
-				VMolecule vmole = new VMultiAlignMolecule(data, group, pmi);
+				VMultiAlignMolecule vmole = new VMultiAlignMolecule(data, group, pmi);
 				vmole.setStartEndPoint(pos.getLoc());
 				vmole.toolTipText = group + "_" + data.name;
 				long length = Math.abs(data.refp[pmi.stopSig] - data.refp[pmi.startSig]) + 1;
@@ -312,55 +348,154 @@ public class MultipleOpticalMapsView extends ViewPanel {
 						}
 						annotationMap.put(anno.getName(), new SimpleLongLocation(p1, p2));
 					}
-				vmoleGroups.get(group).add(vmole);
-				objectListMap.get(name).add(vmole);
-				lastSig.put(name, pmi.stopSig);
-				lastPos.put(name, lastPos.get(name) + spacelen + length);
-			}
-			
 				
+				objectListMap.get(name).add(vmole);
+				objectListMap.get(name).add(new VSpace(groupDNALength - length, 0));
+				lastSig.put(name, pmi.stopSig);
+				
+				vmoleGroups.get(group).add(vmole);
+		
+				lastPos.put(name, lastPos.get(name) + spacelen + groupDNALength);
+			}
+			layoutProgress.update();
 		}
 		
-
-		List<Entry<String, List<VMolecule>>> entries = new ArrayList<>(vmoleGroups.entrySet());
+		VerbosePrinter.println("Adjusting layout...");
+		
+		List<Entry<String, List<VMultiAlignMolecule>>> entries = new ArrayList<>(vmoleGroups.entrySet());
+		ProgressPrinter adjustLayoutProgress = new ProgressPrinter(entries.size(), 10000L);
+		ElementsGroup<Integer, String> connectedBlocks = new ElementsGroup<>(new IntegerKeyFactory());
+		
 		for (int i = entries.size() - 1; i >= 0; i--) {
-			List<VMolecule> vmoles = entries.get(i).getValue();
-			boolean canAlignToRight = true;
-			long minLength = Long.MAX_VALUE;
-			for (VMolecule vmole : vmoles) {
+			List<VMultiAlignMolecule> vmoles = entries.get(i).getValue();
+			String group = entries.get(i).getKey();
+			HashMap<Integer, Long> minMoveLengthsWithinGroup = new HashMap<>();
+
+			for (VMultiAlignMolecule vmole : vmoles) {
 				List<VObject> objectList = objectListMap.get(vmole.getName());
 				int index = objectList.indexOf(vmole);
-				if (index == objectList.size() - 1 || !((objectList.get(index + 1) instanceof VIndel) || (objectList.get(index + 1) instanceof VInversion))) {
-					canAlignToRight = false; 
-					break;
+				// This is the last vmole in the contig, so it is always free to move
+				if (index == objectList.size() - 2)
+					continue;
+				
+				// For the vmole that belongs to the set, check their DNA length
+				// Get the connectedBlock that the nextVmole belongs to
+				VMultiAlignMolecule nextVmole = (VMultiAlignMolecule) objectList.get(index + 3);
+				Integer key = connectedBlocks.getElementKey(nextVmole.group);
+					
+				// Update the length if necessary
+				long length = objectList.get(index + 2).getDNALength();
+				if (minMoveLengthsWithinGroup.containsKey(key)) {
+					if (length < minMoveLengthsWithinGroup.get(key))
+						minMoveLengthsWithinGroup.put(key, length);
 				}
-				long length = objectList.get(index + 1).getDNALength();
-				if (length < minLength)
-					minLength = length;
-			}
-			if (minLength > 0 && canAlignToRight) {
-				for (VMolecule vmole : vmoles) {
+				else
+					minMoveLengthsWithinGroup.put(key, length);
+				
+			}			
+			
+			// We want to obtain the maximum length that can be moved across all the groups
+			long maxMoveLength = 0;
+			for (long moveLength : minMoveLengthsWithinGroup.values())
+				if (moveLength > maxMoveLength)
+					maxMoveLength = moveLength;
+			if (maxMoveLength > 0) {
+				for (VMultiAlignMolecule vmole : vmoles) {
 					List<VObject> objectList = objectListMap.get(vmole.getName());
 					int index = objectList.indexOf(vmole);
-					if (index < objectList.size() - 1) {
-						VSpace vSpace = (VSpace) objectList.get(index + 1);
-						vSpace.setRefDNALength(vSpace.getRefDNALength() - minLength);
-						}
-					if (index > 0) {
+					if (index < objectList.size() - 2) {
+						// alter the space in front
+						VSpace vSpace = (VSpace) objectList.get(index + 2);
+						vSpace.setRefDNALength(vSpace.getRefDNALength() - maxMoveLength);
+						// alter the space behind
+						vSpace = (VSpace) objectList.get(index - 1);
+						vSpace.setRefDNALength(vSpace.getRefDNALength() + maxMoveLength);
+					}
+					else {
+						// Only alter the space behind because no more space in front
 						VSpace vSpace = (VSpace) objectList.get(index - 1);
-						vSpace.setRefDNALength(vSpace.getRefDNALength() + minLength);
+						vSpace.setRefDNALength(vSpace.getRefDNALength() + maxMoveLength);
+					}
+				}
+
+				// Move dependent blocks connected to the group
+				for (Integer key : minMoveLengthsWithinGroup.keySet()) {
+					// Calculate moveLength						 
+					long moveLength = maxMoveLength - minMoveLengthsWithinGroup.get(key);
+					assert moveLength >= 0;
+
+					// moveLength == 0 implies the connected blocks do not need to move						
+					if (moveLength == 0)
+						continue;
+
+					// moveLength > 0 implies we need to shift all related blocks
+					Set<String> blocksToMove = connectedBlocks.getGroupElements(key);
+					for (String b : blocksToMove) {
+						List<VMultiAlignMolecule> vmoleList = vmoleGroups.get(b);
+						for (VMultiAlignMolecule vmole : vmoleList) {
+							List<VObject> objectList = objectListMap.get(vmole.getName());
+							int index = objectList.indexOf(vmole);
+							if (index < objectList.size() - 2) {
+								// alter the space in front
+								VSpace vSpace = (VSpace) objectList.get(index + 2);
+								vSpace.setRefDNALength(vSpace.getRefDNALength() - moveLength);
+								// alter the space behind
+								vSpace = (VSpace) objectList.get(index - 1);
+								vSpace.setRefDNALength(vSpace.getRefDNALength() + moveLength);
+							}
+							else {
+								// Only alter the space behind because no more space in front
+								VSpace vSpace = (VSpace) objectList.get(index - 1);
+								vSpace.setRefDNALength(vSpace.getRefDNALength() + moveLength);
+							}
+						}
 					}
 				}
 			}
-				
+
+			// Update connected blocks
+			HashSet<String> connectedBlock = new HashSet<>(nextBlocks.get(group));
+			connectedBlock.add(group);
+			connectedBlocks.add(connectedBlock);
+			adjustLayoutProgress.update();
 		}
 		
+		// Update blocks starting positions
+		VerbosePrinter.println("Updating starting positions of blocks...");
+		LinkedHashMap<String, Long> startPos = new LinkedHashMap<>();
+		// Remove initial vspace and take it as the starting point
+		for (String name : individualOrder) {
+			VObject vobj = objectListMap.get(name).remove(0);
+			assert vobj instanceof VSpace;
+			startPos.put(name, vobj.getDNALength());
+		}		
+		long minStartPos = Long.MAX_VALUE;
+		for (long currentStartPos : startPos.values())
+			if (currentStartPos < minStartPos)
+				minStartPos = currentStartPos;
+		if (minStartPos > 0)
+			for (String name : individualOrder)
+				startPos.put(name, startPos.get(name) - minStartPos);
 		
 		// Update color
+		VerbosePrinter.println("Updating block color...");
 		resetVMoleColor();
 		
+		VerbosePrinter.println("Creating blocks...");
+		
+		for (String name : individualOrder) {
+			vammMap.put(name, new VMultiAlignMapMolecule(name, objectListMap.get(name), startPos.get(name)));
+		}
+		
+		for (String name : individualOrder) {
+			this.add(vammMap.get(name));
+			vammMap.get(name).addMouseListener(this);
+			vammMap.get(name).setVisible(true);
+		}
 		// Add the vcomponents, set mouse listener and visibility
-		for (String name : orders) {
+	/*
+		for (String name : individualOrder) {
+			
 			for (VObject vobj : objectListMap.get(name)) 
 				if (vobj instanceof VSpace) {
 					this.add(vobj);
@@ -370,7 +505,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 					this.add(vobj);
 				}
 		}
-		for (String name : orders) {
+		for (String name : individualOrder) {
 			for (VObject vobj : objectListMap.get(name)) 
 				if (vobj instanceof VSpace) {
 					vobj.addMouseListener(this);
@@ -380,7 +515,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 					vobj.addMouseListener(this);
 				}
 		}
-		for (String name : orders) {
+		for (String name : individualOrder) {
 			for (VObject vobj : objectListMap.get(name)) 
 				if (vobj instanceof VSpace) {
 					vobj.setVisible(true);
@@ -390,7 +525,8 @@ public class MultipleOpticalMapsView extends ViewPanel {
 					vobj.setVisible(true);
 				}
 		}
-
+*/
+		VerbosePrinter.println("Adding ruler...");
 		// Calculate ruler position
 		long maxLastPos = 0;
 		for (String name : lastPos.keySet())
@@ -399,6 +535,145 @@ public class MultipleOpticalMapsView extends ViewPanel {
 
 		ruler.setStartEndPoint(new SimpleLongLocation(1, maxLastPos));
 		ruler.setVisible(true);
+		
+		
+		VerbosePrinter.println("Parsing coverage...");
+		
+
+//		List<SimpleLongLocation> preIndelCovs = new ArrayList<>();
+//		for (String name : individualOrder) {
+//			long pos = startPos.get(name);
+//			for (VObject vobj : vammMap.get(name).objectList) {
+//				if (vobj instanceof VIndel || vobj instanceof VRearrangement)
+//					if (vobj.getDNALength() > 0)
+//						preIndelCovs.add(new SimpleLongLocation(pos, pos + vobj.getDNALength() - 1));
+//				pos += vobj.getDNALength();
+//			}
+//		}
+//		List<ExtendedLongLocation> indelCovs = ExtendedLongLocation.merge(ExtendedLongLocation.extendSimpleLongLocation(preIndelCovs, 1));
+//		
+//		List<ExtendedLongLocation> preBlockCovs = new ArrayList<>();
+//		for (Entry<String, CoverageInfo> cov : covMap.entrySet()) {
+//			preBlockCovs.add(new ExtendedLongLocation(cov.getValue().startPos, cov.getValue().startPos + cov.getValue().length - 1, cov.getValue().count));
+//		}
+//		List<ExtendedLongLocation> blockCovs = ExtendedLongLocation.merge(preBlockCovs);
+//		
+//		List<ExtendedLongLocation> preCombinedCovs = new ArrayList<>(); 
+//		preCombinedCovs.addAll(indelCovs);
+//		preCombinedCovs.addAll(blockCovs);
+//		List<ExtendedLongLocation> combinedCovs = ExtendedLongLocation.merge(preCombinedCovs);
+//		
+//		vcov = new VCoverage(combinedCovs);
+//		vcov.setStartEndPoint(new SimpleLongLocation(1, maxLastPos));
+//		this.add(vcov);
+//		
+//		VerbosePrinter.println("Parsing variations...");
+//		List<SimpleLongLocation> preBlockTypes = new ArrayList<>();
+//		preBlockTypes.addAll(ExtendedLongLocation.toSimpleLongLocation(indelCovs)); // All indels and rearrangements are counted as one type of "block", in parallel to other blocks
+//		preBlockTypes.addAll(ExtendedLongLocation.toSimpleLongLocation(preBlockCovs));
+//		List<ExtendedLongLocation> blockTypes = ExtendedLongLocation.merge(ExtendedLongLocation.extendSimpleLongLocation(preBlockTypes, 1));
+		
+		LinkedHashMap<String, Long> blocksStartPos = new LinkedHashMap<>();
+		List<UnweightedRange<Long>> preIndelCovs = new ArrayList<>();
+		for (String name : individualOrder) {
+			long pos = startPos.get(name);
+			for (VObject vobj : vammMap.get(name).objectList) {
+				if (vobj instanceof VIndel || vobj instanceof VRearrangement) {
+					if (vobj.getDNALength() > 0) {
+						preIndelCovs.add(new UnweightedRange<Long>(pos, pos + vobj.getDNALength() - 1));
+					}
+				}
+				else
+					if (vobj instanceof VMultiAlignMolecule) {
+						VMultiAlignMolecule vmole = (VMultiAlignMolecule) vobj;
+						blocksStartPos.put(vmole.group, pos);
+					}
+				pos += vobj.getDNALength();
+			}
+		}
+		groupStartPos = blocksStartPos;
+		List<WeightedRange<Long, Integer>> indelCovs = WeightedRange.mergeWeightedRange(WeightedRange.assignWeightToUweightedRange(preIndelCovs, 1));
+		List<WeightedRange<Long, Integer>> preBlockCovs = new ArrayList<>();
+		for (String group : vmoleGroups.keySet()) {
+			long maxlen = 0;
+			for (VMultiAlignMolecule vmole : vmoleGroups.get(group))
+				if (vmole.getDNALength() > maxlen)
+					maxlen = vmole.getDNALength(); 
+			preBlockCovs.add(new WeightedRange<Long, Integer>(blocksStartPos.get(group), blocksStartPos.get(group) + maxlen - 1, vmoleGroups.get(group).size()));
+		}
+//			
+//		for (Entry<String, CoverageInfo> cov : covMap.entrySet()) {
+//			preBlockCovs.add(new WeightedRange<Long, Integer>(cov.getValue().startPos, cov.getValue().startPos + cov.getValue().length - 1, cov.getValue().count));
+//		}
+		List<WeightedRange<Long, Integer>> blockCovs = WeightedRange.mergeWeightedRange(preBlockCovs);
+		
+		List<WeightedRange<Long, Integer>> preCombinedCovs = new ArrayList<>(); 
+		preCombinedCovs.addAll(indelCovs);
+		preCombinedCovs.addAll(blockCovs);
+		List<WeightedRange<Long, Integer>> combinedCovs = WeightedRange.mergeWeightedRange(preCombinedCovs);
+		
+		vcov = new VCoverage(combinedCovs);
+		vcov.setStartEndPoint(new SimpleLongLocation(1, maxLastPos));
+		this.add(vcov);
+		
+		VerbosePrinter.println("Parsing variations...");
+		
+		List<UnweightedRange<Long>> preBlockTypes = new ArrayList<>();
+		preBlockTypes.addAll(WeightedRange.toUnweightedRange(indelCovs)); // All indels and rearrangements are counted as one type of "block", in parallel to other blocks
+//		for (WeightedRange r : indelCovs)
+//			System.out.println(r.min + "\t" + r.max + "\t" + r.weight);
+		preBlockTypes.addAll(WeightedRange.toUnweightedRange(preBlockCovs));
+		List<WeightedRange<Long, Integer>> blockTypes = WeightedRange.mergeWeightedRange(WeightedRange.assignWeightToUweightedRange(preBlockTypes, 1));
+		
+		List<WeightedRange<Long, Double>> variabilities = new ArrayList<>();
+		int typeIndex = 0;
+		int covIndex = 0;
+		long lastVariabilityPos = 0;
+		while (covIndex < combinedCovs.size() && typeIndex < blockTypes.size()) {
+			
+			
+			// Find the next combinedCov that meets the current blockType
+			while (combinedCovs.get(covIndex).max < blockTypes.get(typeIndex).min) {
+				covIndex++;
+				assert covIndex < combinedCovs.size();
+			}
+			// Now combinedCov and blockType should overlap
+			
+			// Move the lastVariabilityPos to the overlapping region
+			if (lastVariabilityPos < blockTypes.get(typeIndex).min)
+				lastVariabilityPos = blockTypes.get(typeIndex).min - 1;
+			
+			// Finding the range, with the stop point as the smaller max of combinedCov and blockType
+			long start = lastVariabilityPos + 1;
+			long stop;
+			if (combinedCovs.get(covIndex).max < blockTypes.get(typeIndex).max) {
+				stop = combinedCovs.get(covIndex).max;
+			}
+			else {
+				stop = blockTypes.get(typeIndex).max;
+			}
+			double weight = 1 - blockTypes.get(typeIndex).weight / (double) combinedCovs.get(covIndex).weight;
+			weight = 1 - 1 / (double) blockTypes.get(typeIndex).weight;
+			weight = blockTypes.get(typeIndex).weight;
+//			System.out.println(start + "\t" + stop + "\t" + blockTypes.get(typeIndex).weight + "\t" + combinedCovs.get(covIndex).weight + "\t" + weight);
+			variabilities.add(new WeightedRange<Long, Double>(start, stop, weight));
+			
+			lastVariabilityPos = stop;
+			if (blockTypes.get(typeIndex).max <= lastVariabilityPos)
+				typeIndex++;
+			if (combinedCovs.get(covIndex).max <= lastVariabilityPos)
+				covIndex++;			
+			
+		}
+		variabilities = WeightedRange.stitchWeightedRange(variabilities);
+		vvar = new VVariability(variabilities);
+		for (WeightedRange<Long, Integer> blockType : blockTypes)
+			if (blockType.weight > ViewSetting.maxVariableBlockTypes)
+				blockType.weight = ViewSetting.maxVariableBlockTypes;
+//		vvar = new VCoverage(blockTypes);
+		vvar.setStartEndPoint(new SimpleLongLocation(1, maxLastPos));
+		this.add(vvar);
+		
 		setRatio(ratio);
 		setDNARatio(dnaRatio);
 		this.setVisible(true);
@@ -414,21 +689,48 @@ public class MultipleOpticalMapsView extends ViewPanel {
 			if (colors != null)
 				color = colors.get(group);
 			else {
-				float r = rand.nextFloat() / 2f + 0.5f;
-				float g = rand.nextFloat() / 2f + 0.5f;
-				float b = rand.nextFloat() / 2f + 0.5f;
-				color = new Color(r, g, b);
+				boolean useVariationColor = false;
+				if (useVariationColor) {
+					HashSet<String> involved = new HashSet<>();
+					for (String key : collinearBlocks.get(group).groups.keySet())
+						involved.add(orders.assignedOrderMap.get(key));
+//					float r = ((orders.orderMap.size() - involved.size())) / (float) orders.orderMap.size();
+//					float g = (involved.size()) / (float) orders.orderMap.size();
+//					float r = (float) (Math.log((orders.orderMap.size() - involved.size())==0?1:(orders.orderMap.size() - involved.size())) / Math.log(orders.orderMap.size()));
+//					float g = (float) (Math.log(involved.size()) / Math.log(orders.orderMap.size()));
+//					float r = ((orders.orderMap.size() - involved.size())) / (float) orders.orderMap.size();
+//					float g = 0;
+//					float b = 0;
+//					color = new Color(r, g, b);
+					
+					float r = rand.nextFloat() / 2f + 0.5f;
+					float g = rand.nextFloat() / 2f + 0.5f;
+					float b = rand.nextFloat() / 2f + 0.5f;
+//					float a =  1 - (float) (Math.log((orders.orderMap.size() - involved.size())==0?1:(orders.orderMap.size() - involved.size())) / Math.log(orders.orderMap.size()));
+					int bin = 4;
+					
+					float a = 1 - ((involved.size() - 1) * bin / orders.orderMap.size() + 1) / (float) bin;
+					color = new Color(r, g, b, a);
+//					
+				}
+				else {
+					float r = rand.nextFloat() / 2f + 0.5f;
+					float g = rand.nextFloat() / 2f + 0.5f;
+					float b = rand.nextFloat() / 2f + 0.5f;
+					color = new Color(r, g, b);
+				}
 			}
 			colorMap.put(group, color);
 		}
 		this.colorMap = colorMap;
-		for (String name : orders)
+		for (String name : orders.getIndividualOrder())
 			for (VObject vobj : objectListMap.get(name)) 
 				if (vobj instanceof VMultiAlignMolecule) {
 					VMultiAlignMolecule vmole = (VMultiAlignMolecule) vobj;
 					Color color = colorMap.get(vmole.group);
 					vmole.setBaseColor(color);
 				}
+		
 		this.repaint();
 	}
 	
@@ -436,13 +738,50 @@ public class MultipleOpticalMapsView extends ViewPanel {
 	public void paintComponent(Graphics graphics) {
 		super.paintComponent(graphics);		
 		Graphics2D g = (Graphics2D) graphics;
-		int height = objBorder.y + ruler.getHeight();
-		int i = 1;
 		if (orders == null)
 			return;
-		for (String name : orders)
-			g.drawString(name, objBorder.x, (int) (height + i++ * (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio));
+		
+		
+		// Draw group bg color
+		for (int i = 0; i < groupRowPos.size(); i++) {
+			if (i % 2 == 0)
+				g.setPaint(ViewSetting.maBGColor1);
+			else
+				g.setPaint(ViewSetting.maBGColor2);
+			g.fillRect(0, groupRowPos.get(i), this.getWidth(), groupRowHeight.get(i));
+		}
 
+		
+		// Draw the query names
+		// Determine the font size
+		Font font; 
+		int fsize = 1;
+		int h = (int) (ViewSetting.maMoleculeSpace * ratio);
+		while (true) {
+			font = new Font("Arial", Font.PLAIN, fsize + 1);
+			int testHeight = getFontMetrics(font).getHeight();
+			if (testHeight > h)
+				break;
+			fsize++;
+		}
+		font = new Font("Arial", Font.PLAIN, fsize);
+		g.setFont(font);
+		g.setPaint(ViewSetting.queryNameColor);
+		
+		if (ViewSetting.displayQueryName)
+			for (String name : orders.getIndividualOrder()) {
+				g.drawString(name, nameLocations.get(name).x, nameLocations.get(name).y);
+			}
+		
+		// Draw the grey background rectangles
+		/*
+		int headerHeight = objBorder.y + ruler.getHeight() + vcov.getHeight() + vvar.getHeight() + ViewSetting.bodyHeight;
+		g.setPaint(Color.GRAY);
+		for (int i = 0; i < lineNo; i++)
+			g.fillRect(objBorder.x, (int) (headerHeight + i * (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio), (int) (ruler.getDNALength() / dnaRatio * ratio), (int) (ViewSetting.bodyHeight * ratio));
+		*/
+		
+		// Draw annotations
 		g.setPaint(Color.RED);
 		g.setStroke(
 		  new BasicStroke((float) (ViewSetting.signalStrokeWidth * ratio / 2),
@@ -479,12 +818,28 @@ public class MultipleOpticalMapsView extends ViewPanel {
 	
 	
 	
-	
+	@Override
+	protected JMenuItem getGotoMenu() {
+		JMenuItem gotoPage = new JMenuItem("Goto...");
+		gotoPage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String ans = JOptionPane.showInputDialog(mainView, "Please input molecule: ");
+				if (ans != null) {
+					if (nameLocations.containsKey(ans))
+						navigateViewPortFromGoto(nameLocations.get(ans));
+					else
+						JOptionPane.showMessageDialog(mainView, "Alignment of molecule " + ans + " is not found in this region.");
+				}
+			}
+		});
+		return gotoPage;	
+	}
 	@Override
 	protected void updateMenu() {
 		super.updateMenu();
 		menu.addSeparator();
-
+		/*
 		JMenu sortMenu = new JMenu("Sort");
 		sortMenu.setMnemonic('o');
 		
@@ -714,11 +1069,11 @@ public class MultipleOpticalMapsView extends ViewPanel {
 		sortMenu.add(sortByLengthItem);
 
 		menu.add(sortMenu);
+		*/
 		
-
 		JMenu saveMenu = new JMenu("Save");
 		saveMenu.setMnemonic('v');
-		
+		/*
 		JMenuItem saveEntriesItem = new JMenuItem("Entries");
 		saveEntriesItem.setMnemonic('e');
 		saveEntriesItem.addActionListener(new ActionListener()
@@ -782,7 +1137,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 			}
 		});
 		saveMenu.add(saveOrderItem);
-		
+		*/
 		JMenuItem saveColorItem = new JMenuItem("Color");
 		saveColorItem.setMnemonic('c');
 		saveColorItem.addActionListener(new ActionListener()
@@ -823,7 +1178,119 @@ public class MultipleOpticalMapsView extends ViewPanel {
 		
 		JMenu countMenu = new JMenu("Count");
 		countMenu.setMnemonic('C');
+		/*
+		JMenuItem importVariabilityItem = new JMenuItem("Import variability");
+		importVariabilityItem.addActionListener(e -> {
+			JFileChooser importVariabilityChooser = new JFileChooser();
+			
+			importVariabilityChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			importVariabilityChooser.setAcceptAllFileFilterUsed(false);
+			importVariabilityChooser.setMultiSelectionEnabled(false);
+			importVariabilityChooser.setDialogTitle("Load variability");
+			importVariabilityChooser.setCurrentDirectory(mainView.workingDirectory);
+			int selection = importVariabilityChooser.showOpenDialog(mainView);
+			if (selection == JFileChooser.APPROVE_OPTION)
+			{
+				mainView.workingDirectory = importVariabilityChooser.getCurrentDirectory();
+				String path = importVariabilityChooser.getSelectedFile().getAbsolutePath();
+				try {
+					List<WeightedRange<Long, Double>> variabilities = new ArrayList<>();
+					List<String> list = ListExtractor.extractList(path);
+					for (String s : list) {
+						String[] l = s.split("\\t");
+						String blockName = l[0];
+						double weight = Double.parseDouble(l[1]);
+						long start = groupStartPos.get(blockName);
+						long stop = groupStartPos.get(blockName) + groupDNALengths.get(blockName) - 1;
+						variabilities.add(new WeightedRange<Long, Double>(start, stop, weight));
+					}
+					variabilities = WeightedRange.mergeWeightedRange(variabilities);
+					vvar.setVariabilities(variabilities);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+					
+				
+				
+			}
 
+			
+		});		
+		countMenu.add(importVariabilityItem);
+		
+		JMenuItem importVariabilityItem2 = new JMenuItem("Import variability 2");
+		importVariabilityItem2.addActionListener(e -> {
+			JFileChooser importVariabilityChooser = new JFileChooser();
+			
+			importVariabilityChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			importVariabilityChooser.setAcceptAllFileFilterUsed(false);
+			importVariabilityChooser.setMultiSelectionEnabled(false);
+			importVariabilityChooser.setDialogTitle("Load variability");
+			importVariabilityChooser.setCurrentDirectory(mainView.workingDirectory);
+			int selection = importVariabilityChooser.showOpenDialog(mainView);
+			if (selection == JFileChooser.APPROVE_OPTION)
+			{
+				mainView.workingDirectory = importVariabilityChooser.getCurrentDirectory();
+				String path = importVariabilityChooser.getSelectedFile().getAbsolutePath();
+				try {
+					List<WeightedRange<Long, Double>> variabilities = new ArrayList<>();
+					List<String> list = ListExtractor.extractList(path);
+					for (String s : list) {
+						String[] l = s.split("\\t");
+						long start = Long.parseLong(l[0]);
+						long stop = Long.parseLong(l[1]);
+						double weight = Double.parseDouble(l[2]);
+						variabilities.add(new WeightedRange<Long, Double>(start, stop, weight));
+					}
+//					variabilities = WeightedRange.mergeWeightedRange(variabilities);
+					vvar.setVariabilities(variabilities);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+					
+				
+				
+			}
+
+			
+		});		
+		countMenu.add(importVariabilityItem2);
+
+		JMenuItem coordinateItem = new JMenuItem("Block coordinate");
+		coordinateItem.addActionListener(e -> {
+			JFileChooser saveBlockCountChooser = new JFileChooser();
+			
+			saveBlockCountChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			saveBlockCountChooser.setAcceptAllFileFilterUsed(false);
+			saveBlockCountChooser.setMultiSelectionEnabled(false);
+			saveBlockCountChooser.setDialogTitle("Save block coordinate");
+			saveBlockCountChooser.setCurrentDirectory(mainView.workingDirectory);
+			int selection = saveBlockCountChooser.showSaveDialog(mainView);
+			if (selection == JFileChooser.APPROVE_OPTION)
+			{
+				mainView.workingDirectory = saveBlockCountChooser.getCurrentDirectory();
+				String path = saveBlockCountChooser.getSelectedFile().getAbsolutePath();
+				try {
+					BufferedWriter bw = new BufferedWriter(new FileWriter(path));
+					groupStartPos.forEach((k,v)-> {
+						try {
+							bw.write(k + ":" + v + "-" + (v + groupDNALengths.get(k) - 1) + "\n");
+						} catch (IOException e2) {
+							e2.printStackTrace();
+						}
+					});
+					bw.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				
+				
+			}
+
+			
+		});		
+		countMenu.add(coordinateItem);
+		*/
 		JMenuItem countSignalItem = new JMenuItem("Signals");
 		countSignalItem.setMnemonic('S');
 		countSignalItem.addActionListener(new ActionListener()
@@ -1007,6 +1474,9 @@ public class MultipleOpticalMapsView extends ViewPanel {
 		});
 		manipulateMenu.add(setSeedItem);
 
+		
+		
+		
 		JMenuItem reverseItem = new JMenuItem("Reverse all");
 		reverseItem.setMnemonic('r');
 		reverseItem.addActionListener(new ActionListener()
@@ -1014,17 +1484,18 @@ public class MultipleOpticalMapsView extends ViewPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				VerbosePrinter.println("Reversing the whole panel");
-				List<GroupingEntry> entries = CollinearBlock.toGroupingEntries(new ArrayList<>(collinearBlocks.values()));
-				List<GroupingEntry> newEntries = new ArrayList<>(); 
-				for (int i = entries.size() - 1; i >= 0; i--)
-					newEntries.add(entries.get(i).getReverse(entries.get(i).name));
-				
-				collinearBlocks.clear();
-				for (CollinearBlock block : CollinearBlock.toCollinearBlocks(newEntries))
-					collinearBlocks.put(block.name, block);
+				LinkedHashMap<String, CollinearBlock> newCollinearBlocks = new LinkedHashMap<>();
+				List<String> keys = new ArrayList<>(collinearBlocks.keySet());
+				for (int i = keys.size() - 1; i >= 0; i--) {
+					String key = keys.get(i);
+					CollinearBlock block = collinearBlocks.get(key);
+					block.reverse();
+					newCollinearBlocks.put(key, block);
+				}
+				collinearBlocks = newCollinearBlocks;
 				selectedMoleSet.clear();
 				VerbosePrinter.println("Updating the view panels...");
-				MultipleOpticalMapsView.this.updateData();
+				MultipleOpticalMapsView.this.createMolecules();
 			}
 		});
 		manipulateMenu.add(reverseItem);
@@ -1054,7 +1525,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 						collinearBlocks.put(block.name, block);
 					
 					selectedMoleSet.clear();
-					MultipleOpticalMapsView.this.updateData();
+					MultipleOpticalMapsView.this.createMolecules();
 				}
 			}
 		});
@@ -1105,7 +1576,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 					selectedMoleSet.clear();
 					
 					VerbosePrinter.println("Updating the view panels...");
-					MultipleOpticalMapsView.this.updateData();
+					MultipleOpticalMapsView.this.createMolecules();
 				}					
 			}
 		});
@@ -1141,14 +1612,14 @@ public class MultipleOpticalMapsView extends ViewPanel {
 					VerbosePrinter.println("Reprocess the order of alignments...");
 					List<GroupingEntry> entries = CollinearBlock.toGroupingEntries(new ArrayList<>(collinearBlocks.values()));					
 //					MultipleAlignment multipleAlignment = new MultipleAlignment();
-//					entries = multipleAlignment.layoutCollinearBlocksNJ(entries, orders);
+//					entries = multipleAlignment.layoutCollinearBlocksNJ(entries, new ArrayList<String>()).stream().flatMap(chain -> chain.groupingEntries.stream()).collect(Collectors.toList());
 					collinearBlocks.clear();
 					for (CollinearBlock block : CollinearBlock.toCollinearBlocks(entries))
 						collinearBlocks.put(block.name, block);
 					selectedMoleSet.clear();
 					
 					VerbosePrinter.println("Updating the view panels...");
-					MultipleOpticalMapsView.this.updateData();
+					MultipleOpticalMapsView.this.createMolecules();
 				}					
 			}
 		});
@@ -1165,7 +1636,7 @@ public class MultipleOpticalMapsView extends ViewPanel {
 				for (CollinearBlock block : blocks)					
 					collinearBlocks.put(block.name, block);
 				VerbosePrinter.println("Updating the view panels...");
-				MultipleOpticalMapsView.this.updateData();
+				MultipleOpticalMapsView.this.createMolecules();
 			}
 		});
 		manipulateMenu.add(ssItem);
@@ -1182,21 +1653,28 @@ public class MultipleOpticalMapsView extends ViewPanel {
 		}
 		else {
 			long maxDNALength = 0;
-			for (String name : objectListMap.keySet()) {
-				long accumulateDNALength = 0;
-				for (VObject vobj : objectListMap.get(name)) {
-					vobj.autoSetSize();
-					accumulateDNALength += vobj.getDNALength();
-				}
-				if (maxDNALength < accumulateDNALength)
-					maxDNALength = accumulateDNALength;
-				
-				for (int i = 0; i < rearrangementListMap.get(name).size(); i++) {
-					rearrangementListMap.get(name).get(i).autoSetSize();
-				}
+//			for (String name : objectListMap.keySet()) {
+//				long accumulateDNALength = 0;
+//				for (VObject vobj : objectListMap.get(name)) {
+//					vobj.autoSetSize();
+//					accumulateDNALength += vobj.getDNALength();
+//				}
+//				if (maxDNALength < accumulateDNALength)
+//					maxDNALength = accumulateDNALength;
+//			}
+
+			this.vvar.autoSetSize();
+			this.vcov.autoSetSize();
+			this.ruler.autoSetSize();
+			
+			for (String name : vammMap.keySet()) {
+				vammMap.get(name).autoSetSize();
+				long len = vammMap.get(name).startingPos + vammMap.get(name).getDNALength();
+				if (len > maxDNALength)
+					maxDNALength = len;
 			}
-			int heightOfRulerAndRef = (int) (objBorder.y + ruler.getHeight() + (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio);
-			int height = (int) (objBorder.y * 2 + heightOfRulerAndRef + (orders.size() * (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio));
+			int heightOfRulerAndRef = (int) (objBorder.y + vvar.getHeight() + vcov.getHeight() + ruler.getHeight() + (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio);
+			int height = (int) (objBorder.y * 2 + heightOfRulerAndRef + (lineNo * (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio));
 			setSize((int) (maxDNALength / dnaRatio * ratio + objBorder.x * 2 + ViewSetting.moleculeNameSize), height);
 			setPreferredSize(getSize());
 		}
@@ -1204,10 +1682,53 @@ public class MultipleOpticalMapsView extends ViewPanel {
 
 	@Override
 	public void reorganize() {	
-		if (!(ruler == null || orders == null || objectListMap == null || rearrangementListMap == null)) {
+		if (!(ruler == null || orders == null || vammMap.isEmpty())) {
 
-			ruler.setLocation(objBorder.x + ViewSetting.moleculeNameSize, objBorder.y);
-			int height = objBorder.y + ruler.getHeight();
+			nameLocations = new LinkedHashMap<>();
+			vvar.setLocation(objBorder.x + ViewSetting.moleculeNameSize, objBorder.y);
+			vcov.setLocation(objBorder.x + ViewSetting.moleculeNameSize, objBorder.y + vvar.getHeight());
+			ruler.setLocation(objBorder.x + ViewSetting.moleculeNameSize, objBorder.y + vvar.getHeight() + vcov.getHeight());
+			int headerHeight = objBorder.y + ruler.getHeight() + vcov.getHeight() + vvar.getHeight() + ViewSetting.bodyHeight;
+			int lineNo = 0;
+			List<Integer> groupRowPos = new ArrayList<>();
+			List<Integer> groupRowHeight = new ArrayList<>();
+			for (String groupName : orders.orderMap.keySet()) {
+				List<Long> currentPosList = new ArrayList<>();
+				List<String> individualNames = orders.orderMap.get(groupName);
+				List<VMultiAlignMapMolecule> list = new ArrayList<>();
+				for (String individualName : individualNames) 
+					list.add(vammMap.get(individualName));
+				
+				Collections.sort(list);
+				
+				for (VMultiAlignMapMolecule vamm : list) {
+					vamm.reorganize();
+					int index = -1;
+					for (int i = 0; i < currentPosList.size(); i++)
+						if (vamm.startingPos - currentPosList.get(i) >= 0) {
+							index = i;
+							currentPosList.set(i, vamm.startingPos + vamm.getDNALength());
+							break;
+						}
+					if (index == -1) {
+						index = currentPosList.size();
+						currentPosList.add(vamm.startingPos + vamm.getDNALength());
+					}
+					
+					int x = objBorder.x + ViewSetting.moleculeNameSize + (int) (vamm.startingPos / dnaRatio * ratio);
+					int y = (int) (headerHeight + (lineNo + index) * (ViewSetting.maMoleculeSpace + ViewSetting.bodyHeight) * ratio);
+					vamm.setLocation(x, y);
+					nameLocations.put(vamm.name, new Point(x, y));
+				}
+				groupRowPos.add((int) (headerHeight + ((lineNo) * (ViewSetting.maMoleculeSpace + ViewSetting.bodyHeight) - ViewSetting.moleculeSpace) * ratio));
+				groupRowHeight.add((int) (currentPosList.size() * (ViewSetting.maMoleculeSpace + ViewSetting.bodyHeight) * ratio));
+				lineNo += currentPosList.size();
+			}
+			
+			this.lineNo = lineNo;
+			this.groupRowPos = groupRowPos;
+			this.groupRowHeight = groupRowHeight;
+			/*
 			int index = 1;
 			for (String name : orders) {
 				long accumulateDNALength = 0;
@@ -1221,10 +1742,8 @@ public class MultipleOpticalMapsView extends ViewPanel {
 						vobj.setLocation(objBorder.x + ViewSetting.moleculeNameSize + (int) (accumulateDNALength / dnaRatio * ratio), (int) (height + index * (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio));
 					accumulateDNALength += vobj.getDNALength();
 				}
-				for (int i = 0; i < rearrangementListMap.get(name).size(); i++)
-					rearrangementListMap.get(name).get(i).setLocation(objBorder.x + ViewSetting.moleculeNameSize + (int) (rearrangementPosListMap.get(name).get(i) / dnaRatio * ratio), (int) (height + index * (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio));
-				index++;
 			}
+			*/
 		}
 	}
 	
@@ -1248,5 +1767,82 @@ public class MultipleOpticalMapsView extends ViewPanel {
 
 	}
 
+	
+}
+
+class VMultiAlignMapMolecule extends VObject implements Comparable<VMultiAlignMapMolecule> {
+	String name;
+	List<VObject> objectList;
+	Long startingPos;
+	public VMultiAlignMapMolecule(String name, List<VObject> objectList, Long startingPos) {
+		this.name = name;
+		this.objectList = objectList;
+		this.startingPos = startingPos;
+		// Add VSpace first so that they always appear in front of VMolecule 
+		for (VObject vobj : objectList)
+			if (vobj instanceof VSpace)
+				this.add(vobj);
+		for (VObject vobj : objectList)
+			if (vobj instanceof VMolecule)
+				this.add(vobj);
+	}
+	@Override
+	public int compareTo(VMultiAlignMapMolecule p) {
+		return Long.compare(this.startingPos, p.startingPos);
+	}
+	@Override
+	public long getDNALength() {
+		long len = 0;
+		for (VObject vobj : objectList)
+			len += vobj.getDNALength();
+		return len;
+	}
+	@Override
+	public void setDNARatio(double dnaRatio) {
+		for (VObject vobj : objectList)
+			vobj.setDNARatio(dnaRatio);
+		super.setDNARatio(dnaRatio);
+	}
+
+	@Override
+	public void setRatio(double ratio) {
+		for (VObject vobj : objectList)
+			vobj.setRatio(ratio);
+		super.setRatio(ratio);
+	}
+	
+	@Override
+	public void autoSetSize() {
+		for (VObject vobj : objectList)
+			vobj.autoSetSize();
+		this.setSize((int) (getDNALength() / dnaRatio * ratio), (int) (ViewSetting.bodyHeight * ratio));
+	}
+	
+	@Override
+	public void reorganize() {
+		long accumulateDNALength = 0;
+		for (VObject vobj : objectList) {
+			vobj.reorganize();
+			// If object size has larger size than DNA length, put it in the middle
+			if (vobj.getWidth() > (int) (vobj.getDNALength() / dnaRatio * ratio)) { 
+				vobj.setLocation((int) (accumulateDNALength / dnaRatio * ratio + (vobj.getDNALength() / dnaRatio * ratio - vobj.getWidth()) / 2), 0);
+			}
+			else
+				vobj.setLocation((int) (accumulateDNALength / dnaRatio * ratio), 0);
+			accumulateDNALength += vobj.getDNALength();
+		}
+	}
+}
+
+class CoverageInfo {
+	int count;
+	long startPos;
+	long length;
+	public CoverageInfo(int count, long startPos, long length) {
+		super();
+		this.count = count;
+		this.startPos = startPos;
+		this.length = length;
+	}
 	
 }

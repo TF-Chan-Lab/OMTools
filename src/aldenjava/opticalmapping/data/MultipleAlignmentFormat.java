@@ -125,4 +125,11 @@ public enum MultipleAlignmentFormat {
 		return lookupfileextmap.containsKey(extension.toLowerCase());
 	}
 
+	public static boolean isValidCollinearBlockFormat(String extension) {
+		if (lookupfileextmap.containsKey(extension.toLowerCase()))
+			return (lookupfileextmap.get(extension.toLowerCase()) == MultipleAlignmentFormat.CBL);
+		return false;
+		
+	}
+
 }

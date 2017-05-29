@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -57,7 +58,6 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -75,8 +75,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.io.FilenameUtils;
 
+import aldenjava.file.ListExtractor;
 import aldenjava.opticalmapping.GenomicPosNode;
 import aldenjava.opticalmapping.OMTools;
+//import aldenjava.opticalmapping.OMTools;
 import aldenjava.opticalmapping.application.svdetection.StandardSVNode;
 import aldenjava.opticalmapping.application.svdetection.StandardSVReader;
 import aldenjava.opticalmapping.data.DataFormat;
@@ -98,6 +100,7 @@ import aldenjava.opticalmapping.data.mappingresult.OptMapResultWriter;
 import aldenjava.opticalmapping.data.mappingresult.ResultFormat;
 import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
 import aldenjava.opticalmapping.multiplealignment.CollinearBlock;
+import aldenjava.opticalmapping.multiplealignment.CollinearBlockOrder;
 import aldenjava.opticalmapping.multiplealignment.CollinearBlockReader;
 import aldenjava.opticalmapping.visualizer.viewpanel.AlignmentControlPanel;
 import aldenjava.opticalmapping.visualizer.viewpanel.AlignmentView;
@@ -112,7 +115,7 @@ import aldenjava.opticalmapping.visualizer.viewpanel.MultipleOpticalMapsView;
 import aldenjava.opticalmapping.visualizer.viewpanel.RegionalControlPanel;
 import aldenjava.opticalmapping.visualizer.viewpanel.RegionalView;
 import aldenjava.opticalmapping.visualizer.viewpanel.ViewSaver;
-import aldenjava.opticalmapping.visualizer.vobject.VRuler;
+import aldenjava.opticalmapping.visualizer.viewpanel.annotation.AnnotationPanel;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
@@ -123,6 +126,7 @@ import joptsimple.OptionSpec;
  */
 public class OMView extends JFrame implements PropertyChangeListener {
 
+	public static LinkedHashMap<String, HashSet<Integer>> dataColorMap = new LinkedHashMap<>();
 	private final static String aboutMessage = "Program Version: " + OMTools.version;
 //	private final static String aboutMessage = "Program Version: " + OMTools.version + "\nAuthor: " + OMTools.author;
 //	private final static String aboutMessage = "Program Version: ";
@@ -632,13 +636,13 @@ public class OMView extends JFrame implements PropertyChangeListener {
 		rulerSubMenu.setMnemonic('R');
 		final JCheckBoxMenuItem displayRulerItem = new JCheckBoxMenuItem("Display Ruler");
 		displayRulerItem.setMnemonic('D');
-		displayRulerItem.setState(VRuler.display);
+		displayRulerItem.setState(ViewSetting.displayRuler);
 		displayRulerItem.addActionListener(new ActionListener()		
 		{
 			@Override
 			public void actionPerformed(ActionEvent e) 
 			{
-				VRuler.display = displayRulerItem.getState();
+				ViewSetting.displayRuler = displayRulerItem.getState();
 				controlPanel.repaint();
 			}		
 		});
@@ -651,10 +655,10 @@ public class OMView extends JFrame implements PropertyChangeListener {
 			@Override
 			public void actionPerformed(ActionEvent e) 
 			{
-				String ans = JOptionPane.showInputDialog(workingFrame, "Please input ruler small mark size", VRuler.smallMark);
-				VRuler.smallMark = Long.parseLong(ans.trim());
-				ans = JOptionPane.showInputDialog(workingFrame, "Please input ruler large mark size", VRuler.largeMark);
-				VRuler.largeMark = Long.parseLong(ans.trim());
+				String ans = JOptionPane.showInputDialog(workingFrame, "Please input ruler small mark size", ViewSetting.rulerSmallMark);
+				ViewSetting.rulerSmallMark = Long.parseLong(ans.trim());
+				ans = JOptionPane.showInputDialog(workingFrame, "Please input ruler large mark size", ViewSetting.rulerLargeMark);
+				ViewSetting.rulerLargeMark = Long.parseLong(ans.trim());
 				controlPanel.repaint();
 			}		
 		});
@@ -729,17 +733,22 @@ public class OMView extends JFrame implements PropertyChangeListener {
 				String setting = JOptionPane.showInputDialog(workingFrame, "Setting name:", "");
 				
 				String valueString = JOptionPane.showInputDialog(workingFrame, "Setting value:", "");
-				try {
-					int value = Integer.parseInt(valueString);
-					ViewSetting.changeSetting(setting, value);
-				}
-				catch (NumberFormatException dummy) {
-					System.err.println("Value has to be integer");
-				}
+				ViewSetting.changeSetting(setting, valueString);
 			}
 		});
 		helpMenu.add(developerItem);
-		
+		JMenuItem developerOutputItem = new JMenuItem("Output Options");
+		developerOutputItem.setMnemonic('O');
+		developerOutputItem.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				ViewSetting.displaySetting();
+			}
+		});
+		helpMenu.add(developerOutputItem);
+
 		
 		menuBar.add(helpMenu);
 		
@@ -1213,7 +1222,7 @@ public class OMView extends JFrame implements PropertyChangeListener {
 			this.aformat = aformat;
 		}
 		@Override
-		protected List<? extends AnnotationNode> doInBackground() throws Exception{
+		protected List<? extends AnnotationNode> doInBackground() throws Exception {
 			ProgressMonitorInputStream stream = new ProgressMonitorInputStream(OMView.this, "Reading " + filename + "...", new FileInputStream(filename));
 			switch (aformat)
 			{
@@ -1276,10 +1285,7 @@ public class OMView extends JFrame implements PropertyChangeListener {
 		{
 			if (!isCancelled())
 				try {
-//					viewPanel.loadReference(get());
-//					controlPanel.loadAnnotation(get());
 					dataModule.addAnnotation(filename, get());
-//					OMView.this.taskList.remove(this);
 				} catch (InterruptedException | ExecutionException e) {
 					JOptionPane.showMessageDialog(OMView.this, "Task Interrupted.");
 					e.printStackTrace();
@@ -1562,7 +1568,7 @@ public class OMView extends JFrame implements PropertyChangeListener {
 			}
 		}
 	}
-	class MultipleAlignmentOrderLoader extends SwingWorker<List<String>, Void>{
+	class MultipleAlignmentOrderLoader extends SwingWorker<CollinearBlockOrder, Void>{
 
 		private String filename;
 		private MultipleAlignmentFormat format;
@@ -1575,17 +1581,30 @@ public class OMView extends JFrame implements PropertyChangeListener {
 			this.format = format;
 		}
 		@Override
-		protected List<String> doInBackground() throws Exception{			
+		protected CollinearBlockOrder doInBackground() throws Exception{			
 			BufferedReader reader;
-			String query;
+			String line;
 			ProgressMonitorInputStream stream = new ProgressMonitorInputStream(OMView.this, "Reading " + filename + "...", new FileInputStream(filename));
-			List<String> order = new ArrayList<>();
+			LinkedHashMap<String, List<String>> orderMap = new LinkedHashMap<>();
 			reader = new BufferedReader(new InputStreamReader(stream));
-			while ((query = reader.readLine()) != null) {
-				order.add(query);
+			while ((line = reader.readLine()) != null) {
+				String groupName = null;
+				String individualName = null;
+				String[] l = line.split("\\s+");
+				if (l.length == 1) {
+					groupName = l[0];
+					individualName = l[0];
+				}
+				else if (l.length == 2) {
+					groupName = l[0];
+					individualName = l[1];
+				}
+				if (!orderMap.containsKey(groupName))
+					orderMap.put(groupName, new ArrayList<String>());
+				orderMap.get(groupName).add(individualName);
 			}
 			reader.close();
-			return order;
+			return new CollinearBlockOrder(orderMap);
 		}
 
 		@Override
@@ -1766,7 +1785,8 @@ public class OMView extends JFrame implements PropertyChangeListener {
                 }
 
                 ReferenceDataSelectionPanel rdsp = new ReferenceDataSelectionPanel(dataFiles, new ArrayList<File>());
-                JOptionPane.showMessageDialog(null, rdsp, "Choose to import as reference or molecule", JOptionPane.PLAIN_MESSAGE);
+                if (dataFiles.size() > 0)
+                	JOptionPane.showMessageDialog(null, rdsp, "Choose to import as reference or molecule", JOptionPane.PLAIN_MESSAGE);
                 
                 List<File> refFiles = rdsp.getReferenceFiles();
                 List<File> moleculeFiles = rdsp.getDataFiles();
@@ -1805,22 +1825,48 @@ public class OMView extends JFrame implements PropertyChangeListener {
 		OptionSpec<String> viewsave = parser.accepts("viewsave", "Save views to specific location instead of starting OMView").withRequiredArg().ofType(String.class);
 		OptionSpec<String> viewsaveformat = parser.accepts("viewsaveformat", "Formats of image to be saved. " + ImageSaveFormat.getFormatHelp()).withRequiredArg().ofType(String.class).defaultsTo("png");
 		parser.addHeader("View Settings", 1);
+		OptionSpec<Double> setDefaultDNARatio = parser.accepts("dnaratio", "Default DNA ratio").withRequiredArg().ofType(Double.class).defaultsTo(ViewSetting.defaultDNARatio);
+		OptionSpec<Double> setDefaultZoom = parser.accepts("zoom", "Default zoom  level").withRequiredArg().ofType(Double.class).defaultsTo(ViewSetting.defaultZoom);
 		OptionSpec<Boolean> viewbreakresult = parser.accepts("viewbreakresult", "Enable Result Breaker").withRequiredArg().ofType(Boolean.class).defaultsTo(false);
+		OptionSpec<Boolean> viewunmap = parser.accepts("viewunmap", "Enable Unmapped Portion").withRequiredArg().ofType(Boolean.class).defaultsTo(false);
+		OptionSpec<String> viewsettingfile = parser.accepts("viewsettingin", "The OMView setting file input").withRequiredArg().ofType(String.class);
 		
 		parser.addHeader("Help", 1);
 		parser.accepts("help", "Display help menu").forHelp();
+		
+		parser.addHeader(null, 0);
+		parser.accepts("datacolormap").withRequiredArg().ofType(String.class);
 		OptionSet options = parser.parse(args);
 		if (options.has("help")) {
 			parser.printHelpOn(System.out);
 			return;
 		}
 		
+		if (options.has("datacolormap")) {
+			List<String> list = ListExtractor.extractList((String) options.valueOf("datacolormap"));
+			for (String s : list) {
+				String name = s.split("\\s+")[0];
+				HashSet<Integer> mySet = dataColorMap.get(name);
+				if (mySet == null) {
+					mySet = new HashSet<>();
+					dataColorMap.put(name, mySet);
+				}
+				int segment = Integer.parseInt(s.split("\\s+")[1]);
+				mySet.add(segment);
+			}
+		}
+			
+		
 		ToolTipManager.sharedInstance().setInitialDelay(0);
 		OMView omview = new OMView();
 		
 		// View settings
+		ViewSetting.defaultDNARatio = setDefaultDNARatio.value(options);
+		ViewSetting.defaultZoom = setDefaultZoom.value(options);
 		DataModule.useResultsBreaker = viewbreakresult.value(options);
-		
+		RegionalView.showUnmap = viewunmap.value(options);
+		if (options.has(viewsettingfile))
+			ViewSetting.importSetting(viewsettingfile.value(options));
 		// Load files
 		if (options.has(viewrefin))
 		{
@@ -1889,7 +1935,14 @@ public class OMView extends JFrame implements PropertyChangeListener {
 			List<String> regionlist = viewregion.values(options);
 			for (String region : regionlist) {
 				RegionalControlPanel controlPanel = omview.createRegionalViewTab(dataSelections);
+				
 				controlPanel.setRegion(new GenomicPosNode(region));
+				List<LinkedHashMap<VDataType, List<String>>> annotationSelections = omview.dataModule.getIndividualDataSelection(VDataType.ANNOTATION);
+				for (LinkedHashMap<VDataType, List<String>> annotationSelection : annotationSelections) {
+					AnnotationPanel panel = new AnnotationPanel(omview);
+					panel.updateDataSelection(annotationSelection);
+					controlPanel.createAnnotationPanel(panel);
+				}
 			}
 			defaultOpen = false;
 		}		
@@ -1933,10 +1986,13 @@ public class OMView extends JFrame implements PropertyChangeListener {
 			List<String> cboFiles = dataSelection.get(VDataType.MULTIPLEALIGNMENTORDER);
 			List<String> cbcFiles = dataSelection.get(VDataType.MULTIPLEALIGNMENTCOLOR);
 			
-			for (int i = 0; i < Math.min(cblFiles.size(), cboFiles.size()); i++) {
+			for (int i = 0; i < cblFiles.size(); i++) {
 				LinkedHashMap<VDataType, List<String>> newDataSelection = new LinkedHashMap<>();
 				newDataSelection.put(VDataType.MULTIPLEALIGNMENTBLOCK, cblFiles.subList(i, i + 1));
-				newDataSelection.put(VDataType.MULTIPLEALIGNMENTORDER, cboFiles.subList(i, i + 1));
+				if (i < cboFiles.size())
+					newDataSelection.put(VDataType.MULTIPLEALIGNMENTORDER, cboFiles.subList(i, i + 1));
+				else
+					newDataSelection.put(VDataType.MULTIPLEALIGNMENTORDER, new ArrayList<String>());	
 				if (i < cbcFiles.size())
 					newDataSelection.put(VDataType.MULTIPLEALIGNMENTCOLOR, cbcFiles.subList(i, i + 1));
 				else
@@ -1969,7 +2025,8 @@ public class OMView extends JFrame implements PropertyChangeListener {
 					}
 			defaultOpen = false;
 			
-			return; // After saving, terminate the OMView program
+//			return; // After saving, terminate the OMView program
+			System.exit(0);
 		}
 		if (defaultOpen)
 			omview.createRegionalViewTab();

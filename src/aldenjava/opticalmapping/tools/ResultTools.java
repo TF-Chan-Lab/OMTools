@@ -106,8 +106,8 @@ public class ResultTools{
 		parser.accepts("refmapin").withRequiredArg().ofType(String.class);
 		parser.accepts("optmapin").withRequiredArg().ofType(String.class);
 		parser.accepts("optresout").withRequiredArg().ofType(String.class);
-		parser.accepts("minclusterscore", "Min cluster score.").withRequiredArg().ofType(Integer.class).defaultsTo(0);
-		parser.accepts("minconf", "Minimum confidence").withRequiredArg().ofType(Double.class).defaultsTo(0.0);
+		parser.accepts("minjoinscore").withRequiredArg().ofType(Integer.class).defaultsTo(0);
+		parser.accepts("minconf").withRequiredArg().ofType(Double.class).defaultsTo(0.0);
 		
 		// Help
 		if (args.length == 0)

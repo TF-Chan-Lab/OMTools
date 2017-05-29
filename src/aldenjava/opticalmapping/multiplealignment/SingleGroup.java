@@ -37,5 +37,9 @@ public class SingleGroup {
 		this.segment = segment;
 		this.orientation = orientation;
 	}
-	
+	public SingleGroup(SingleGroup g) {
+		this.segment = g.segment;
+		this.orientation = g.orientation;
+	}
+
 }

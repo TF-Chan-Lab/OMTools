@@ -33,6 +33,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.Line2D;
 
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 
@@ -44,25 +45,23 @@ public class VInversion extends VSpace {
 
 	@Override
 	public void autoSetSize() {
-		int molSpaceWidth = (int) (ViewSetting.minSVObjectSize / dnaRatio * ratio);
-		this.setSize(Math.max((int) (reflength / dnaRatio * ratio), molSpaceWidth), (int) (ViewSetting.bodyHeight * ratio));
+		this.setSize(Math.max((int) (reflength / dnaRatio * ratio), (int) (ViewSetting.SVObjectSize / dnaRatio * ratio)), (int) (ViewSetting.bodyHeight * ratio));
 	}
 
 	@Override
 	public void paintComponent(Graphics graphics) {
 		super.paintComponent(graphics);
 		Graphics2D g = (Graphics2D) graphics;
-		g.setStroke(new BasicStroke(2));
+		g.setStroke(new BasicStroke((float) (2 * ratio)));
 		g.setPaint(Color.BLACK);
-		int refSpaceWidth = (int) (reflength / dnaRatio * ratio);
-		int molSpaceWidth = (int) (mollength / dnaRatio * ratio);
-		molSpaceWidth = (int) (ViewSetting.minSVObjectSize / dnaRatio * ratio);
 		
-		g.drawLine(molSpaceWidth > refSpaceWidth ? (molSpaceWidth - refSpaceWidth) / 2 : 0, this.getHeight() / 2, molSpaceWidth > refSpaceWidth ? (molSpaceWidth + refSpaceWidth) / 2 : refSpaceWidth, this.getHeight() / 2);
+		double refSpaceWidth = (reflength / dnaRatio * ratio);
+		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
+		g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
 		
-		int midPtX = (refSpaceWidth > molSpaceWidth ? refSpaceWidth : molSpaceWidth) / 2;
 		int midPtY = this.getHeight() / 2;
-		g.drawArc(midPtX - molSpaceWidth / 4, midPtY - molSpaceWidth / 4, molSpaceWidth / 2, molSpaceWidth / 2, 180, 360);
+		int arcSize = (int) (ViewSetting.SVObjectSize / dnaRatio * ratio);
+		g.drawArc((int) (midPtX - arcSize / 4), midPtY - arcSize / 4, arcSize / 2, arcSize / 2, 180, 360);
 		
 	}
 

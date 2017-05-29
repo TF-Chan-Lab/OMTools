@@ -31,8 +31,12 @@ package aldenjava.opticalmapping.visualizer.viewpanel;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -46,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import aldenjava.common.SimpleLongLocation;
@@ -70,6 +75,9 @@ public class AnchorView extends ViewPanel {
 	HashSet<String> idarray = null;
 	private GenomicPosNode targetSignal;
 	private long vrefDisplace = 0;
+	private LinkedHashMap<String, Point> nameLocations = new LinkedHashMap<>();
+	
+	
 	public AnchorView(OMView mainView) {
 		super(mainView);
 		title = "Anchor View";
@@ -142,10 +150,13 @@ public class AnchorView extends ViewPanel {
 		headvref.setLocation(objBorder.x + (int) (vrefDisplace * ratio / dnaRatio), (int) (objBorder.y + ruler.getHeight() + ViewSetting.moleculeSpace * ratio));
 		int height = (int) ((ViewSetting.moleculeSpace + ViewSetting.bodyHeight * (RegionalView.showUnmap?2:1)) * ratio);
 		int heightOfRulerAndRef = (int) (objBorder.y + ruler.getHeight() + (ViewSetting.moleculeSpace * 2 + ViewSetting.bodyHeight) * ratio);
+		nameLocations.clear();
 		for (int i = 0; i < vrefList.size(); i++)
 		{
 			
 			vrefList.get(i).setLocation(objBorder.x + (int) ((displaceList.get(i) - region.start + 1) * ratio / dnaRatio), heightOfRulerAndRef + (int) ((height * (i))));
+			
+			nameLocations.put(vrefList.get(i).getName(), new Point(objBorder.x + (int) ((displaceList.get(i) - region.start + 1) * ratio / dnaRatio), heightOfRulerAndRef + (int) ((height * (i)))));
 //			labelList.get(i).setLocation(objBorder.x + (int) (region.start * ratio / dnaRatio) - 80, objBorder.y + (int) ((((vrefList.get(i).getHeight() + 5) * (i + 1)) * ratio) - 10));
 //			if (labelList5.get(i) != null)
 //				labelList5.get(i).setLocation(objBorder.x + (int) (displaceList5.get(i) * ratio / dnaRatio), objBorder.y + (int) ((((vrefList.get(i).getHeight() + 5) * (i + 1)) * ratio)) + 5);
@@ -602,6 +613,26 @@ public class AnchorView extends ViewPanel {
 		int x2 = (int) (objBorder.x + (targetSignal.stop - region.start) / dnaRatio * ratio);
 		g.drawLine(x1, (int) (objBorder.y + ruler.getHeight() + ViewSetting.moleculeSpace * ratio), x1, this.getHeight());
 		g.drawLine(x2, (int) (objBorder.y + ruler.getHeight() + ViewSetting.moleculeSpace * ratio), x2, this.getHeight());
+		
+		// Draw the query names
+		// Determine the font size
+		Font font; 
+		int fsize = 1;
+		int h = (int) (ViewSetting.maMoleculeSpace * ratio);
+		while (true) {
+			font = new Font("Arial", Font.PLAIN, fsize + 1);
+			int testHeight = getFontMetrics(font).getHeight();
+			if (testHeight > h)
+				break;
+			fsize++;
+		}
+		font = new Font("Arial", Font.PLAIN, fsize);
+		g.setFont(font);
+		g.setPaint(ViewSetting.queryNameColor);
+		
+		if (ViewSetting.displayQueryName)
+			nameLocations.forEach((name,point) -> g.drawString(name, point.x, point.y));
+
 	}
 	@Override
 	public void updateData() {
@@ -617,5 +648,21 @@ public class AnchorView extends ViewPanel {
 			mainView.createAlignmentViewTab(dataSelection).setViewMolecule(vm.getName());;
 		}	
 	}
-
+	@Override
+	protected JMenuItem getGotoMenu() {
+		JMenuItem gotoPage = new JMenuItem("Goto...");
+		gotoPage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				String ans = JOptionPane.showInputDialog(mainView, "Please input molecule:");
+				if (ans != null) {
+					if (nameLocations.containsKey(ans))
+						navigateViewPortFromGoto(nameLocations.get(ans));
+					else
+						JOptionPane.showMessageDialog(mainView, "Alignment of molecule " + ans + " is not found in this region.");
+				}
+			}
+		});
+		return gotoPage;	
+	}
 }

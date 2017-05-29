@@ -57,9 +57,10 @@ public class OMBlastCore {
 	private int kmerlen;
 	private int maxnosignalregion;
 	private int maxSeedNumber;
+	private boolean allowEqualRefQuery;
 
 	public OMBlastCore(LinkedHashMap<String, DataNode> optrefmap, SeedExtension seedextensionmodule, SeedDatabase seeddatabase, int measure, double ear, int kmerlen,
-			int maxnosignalregion, int maxSeedNumber) {
+			int maxnosignalregion, int maxSeedNumber, boolean allowEqualRefQuery) {
 		this.optrefmap = optrefmap;
 		this.seedextensionmodule = seedextensionmodule;
 		this.seeddatabase = seeddatabase;
@@ -68,6 +69,7 @@ public class OMBlastCore {
 		this.kmerlen = kmerlen;
 		this.maxnosignalregion = maxnosignalregion;
 		this.maxSeedNumber = maxSeedNumber;
+		this.allowEqualRefQuery = allowEqualRefQuery;
 	}
 
 	public OMBlastCore(LinkedHashMap<String, DataNode> optrefmap) {
@@ -75,7 +77,7 @@ public class OMBlastCore {
 	}
 
 	public void setParameters(int seedingmode, int kmerlen, int maxnosignalregion, boolean allowLocalAlignment, int measure, double ear, int matchscore, int falseppenalty, int falsenpenalty,
-			int falselimit, int maxSeedNumber) {
+			int falselimit, int maxSeedNumber, boolean allowEqualRefQuery) {
 		this.kmerlen = kmerlen;
 		this.maxnosignalregion = maxnosignalregion;
 		this.measure = measure;
@@ -87,6 +89,7 @@ public class OMBlastCore {
 		seeddatabase.buildDatabase();
 		this.seedextensionmodule = new SeedExtension(optrefmap);
 		this.seedextensionmodule.setParameters(measure, ear, matchscore, falseppenalty, falsenpenalty, falselimit, allowLocalAlignment);
+		this.allowEqualRefQuery = allowEqualRefQuery;
 	}
 
 	/**
@@ -126,6 +129,8 @@ public class OMBlastCore {
 		List<Seed> pooledseedlist = seeddatabase.getJoinedSeed(dataKmerList, ear, measure);
 		// Extension
 		for (Seed seed : pooledseedlist) {
+			if (!allowEqualRefQuery && seed.source.equals(seed.kmerpointer.source))
+				continue;
 			ExtensionResult tmpresult = seedextensionmodule.extension(data, seed);
 			if (tmpresult != null)
 				extensionresultlist.add(tmpresult);
@@ -166,6 +171,6 @@ public class OMBlastCore {
 	 * @return a copy of this instance
 	 */
 	public OMBlastCore copy() {
-		return new OMBlastCore(optrefmap, seedextensionmodule.copy(), seeddatabase.copy(), measure, ear, kmerlen, maxnosignalregion, maxSeedNumber);
+		return new OMBlastCore(optrefmap, seedextensionmodule.copy(), seeddatabase.copy(), measure, ear, kmerlen, maxnosignalregion, maxSeedNumber, allowEqualRefQuery);
 	}
 }

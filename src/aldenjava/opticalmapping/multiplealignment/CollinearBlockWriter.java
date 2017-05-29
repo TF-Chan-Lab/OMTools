@@ -31,51 +31,81 @@ package aldenjava.opticalmapping.multiplealignment;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import aldenjava.opticalmapping.data.OMWriter;
+import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
 import aldenjava.opticalmapping.visualizer.utils.VPartialMoleculeInfo;
 import joptsimple.OptionSet;
 
 public class CollinearBlockWriter extends OMWriter<CollinearBlock>{
-	private String[] queries;
+//	private String[] queries;
 	
-	public CollinearBlockWriter(String filename, String[] queries) throws IOException {
+	public CollinearBlockWriter(String filename) throws IOException {
 		super(filename, false);
-		this.queries = queries;
+//		this.queries = queries;
 		initializeHeader();
 	}
-	public CollinearBlockWriter(OptionSet options, String[] queries) throws IOException {
-		this((String)options.valueOf("cbout"), queries);
+	public CollinearBlockWriter(OptionSet options) throws IOException {
+		this((String)options.valueOf("cblout"));
 	}
 
-	@Override
-	public void initializeHeader() throws IOException {
-		for (String query : queries)
-			bw.write("\t" + query);
-		bw.write("\n");
-	}
+//	@Override
+//	public void initializeHeader() throws IOException {
+//		for (String query : queries)
+//			bw.write("\t" + query);
+//		bw.write("\n");
+//	}
 	
 	@Override
 	public void write(CollinearBlock block) throws IOException {
 		bw.write(block.name);
-		for (String query : queries) {
-			bw.write("\t");
-			if (block.groups.containsKey(query)) {
-				VPartialMoleculeInfo vpmi = block.groups.get(query);
-				bw.write(vpmi.startSig + "-" + vpmi.stopSig + (vpmi.isReverse()?"R":"F"));
-			}
+		bw.write("\t");
+		boolean firstQuery = true;
+		for (String query : block.groups.keySet()) {
+			if (!firstQuery)
+				bw.write(";");
+			firstQuery = false;
+			VPartialMoleculeInfo vpmi = block.groups.get(query);
+			bw.write(query + ":" + vpmi.startSig + "-" + vpmi.stopSig + (vpmi.isReverse()?"R":"F"));			
 		}
 		bw.write("\n");
+			
+//		for (String query : queries) {
+//			bw.write("\t");
+//			if (block.groups.containsKey(query)) {
+//				VPartialMoleculeInfo vpmi = block.groups.get(query);
+//				bw.write(vpmi.startSig + "-" + vpmi.stopSig + (vpmi.isReverse()?"R":"F"));
+//			}
+//		}
+//		bw.write("\n");
 	}
-	public static void writeAll(String filename, String[] queries, LinkedHashMap<String, CollinearBlock> collinearBlocks) throws IOException {
-		CollinearBlockWriter cbw = new CollinearBlockWriter(filename, queries);
+	public static void writeAll(String filename, List<CollinearBlock> collinearBlocks) throws IOException {
+		CollinearBlockWriter cbw = new CollinearBlockWriter(filename);
 		cbw.writeAll(collinearBlocks);
 		cbw.close();
 	}
-	public static void writeAll(OptionSet options, String[] queries, LinkedHashMap<String, CollinearBlock> collinearBlocks) throws IOException {
-		CollinearBlockWriter cbw = new CollinearBlockWriter(options, queries);
+	public static void writeAll(OptionSet options, List<CollinearBlock> collinearBlocks) throws IOException {
+		CollinearBlockWriter cbw = new CollinearBlockWriter(options);
 		cbw.writeAll(collinearBlocks);
 		cbw.close();
+	}
+
+	public static void writeAll(String filename, LinkedHashMap<String, CollinearBlock> collinearBlocks) throws IOException {
+		CollinearBlockWriter cbw = new CollinearBlockWriter(filename);
+		cbw.writeAll(collinearBlocks);
+		cbw.close();
+	}
+	public static void writeAll(OptionSet options, LinkedHashMap<String, CollinearBlock> collinearBlocks) throws IOException {
+		CollinearBlockWriter cbw = new CollinearBlockWriter(options);
+		cbw.writeAll(collinearBlocks);
+		cbw.close();
+	}
+	
+	public static void assignOptions(ExtendOptionParser parser, int level) {
+		parser.addHeader("Collinear Block Writer Options", level);
+		parser.accepts("cblout", "Multiple alignment collinear blocks output.").withRequiredArg().ofType(String.class);		
+
 	}
 
 }

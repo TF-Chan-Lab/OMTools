@@ -1,14 +1,15 @@
-	151	258	833
-Block1		0-2F	
-Block2			0-2F
-Block3		2-3F	2-3F
-Block4	25-21R	3-7F	3-7F
-Block5	21-19R		7-9F
-Block6			9-10F
-Block7		7-8F	
-Block8	19-13R	8-14F	10-16F
-Block9		14-15F	16-17F
-Block10	13-11R		
-Block11	11-6R	15-20F	17-22F
-Block12	6-3R		22-25F
-Block13	3-0R		
+#OMTools Version 0.25+
+#OldCBLFormatConversion --ocblin Ecoli_MA.cbl --cblout Ecoli_MA2.cbl
+Block1	258:0-2F
+Block2	833:0-2F
+Block3	258:2-3F;833:2-3F
+Block4	151:25-21R;258:3-7F;833:3-7F
+Block5	151:21-19R;833:7-9F
+Block6	833:9-10F
+Block7	258:7-8F
+Block8	151:19-13R;258:8-14F;833:10-16F
+Block9	258:14-15F;833:16-17F
+Block10	151:13-11R
+Block11	151:11-6R;258:15-20F;833:17-22F
+Block12	151:6-3R;833:22-25F
+Block13	151:3-0R

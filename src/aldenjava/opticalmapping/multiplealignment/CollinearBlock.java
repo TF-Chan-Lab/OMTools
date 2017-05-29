@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import aldenjava.opticalmapping.data.data.DataNode;
 import aldenjava.opticalmapping.visualizer.utils.VPartialMoleculeInfo;
 
 public class CollinearBlock {
@@ -49,6 +50,12 @@ public class CollinearBlock {
 		this.name = name;
 		this.groups = groups;
 	}
+	
+	public void reverse() {
+		for (VPartialMoleculeInfo vpm : groups.values())
+			vpm.reverse();
+	}
+	
 	public static List<GroupingEntry> toGroupingEntries(List<CollinearBlock> collinearBlocks) {
 		List<GroupingEntry> entries = new ArrayList<>();
 		for (CollinearBlock block : collinearBlocks) {
@@ -87,7 +94,7 @@ public class CollinearBlock {
 				outputLastEntry = entry;
 			}
 			else
-				if (outputLastEntry.canMerge(entry)) {
+				if (outputLastEntry.canDirectlyConnect(entry)) {
 					outputLastEntry = entry;
 				}
 				else {
@@ -134,7 +141,7 @@ public class CollinearBlock {
 		// Reset the IDs for output group entries		
 		int nextID = 1;
 		for (GroupingEntry entry : entries) {
-			String name = "Block" + nextID++;
+			String name = entry.name;
 			LinkedHashMap<String, VPartialMoleculeInfo> pmiMap = new LinkedHashMap<String, VPartialMoleculeInfo>();
 			for (String key : entry.groups.keySet()) {
 				SingleGroup g1 = entry.groups.get(key);
@@ -150,6 +157,16 @@ public class CollinearBlock {
 			collinearBlocks.add(new CollinearBlock(name, pmiMap));
 		}
 		return collinearBlocks;
+	}
+
+	public long getSize(LinkedHashMap<String, DataNode> dataMap) {
+		long totalSize = 0;
+		for (String key : groups.keySet()) {
+			long s1 = dataMap.get(key).refp[groups.get(key).startSig];
+			long s2 = dataMap.get(key).refp[groups.get(key).stopSig];
+			totalSize += Math.abs(s2 - s1);
+		}
+		return totalSize / groups.size();
 	}
 
 }

@@ -42,14 +42,20 @@ public class KmerCluster implements Identifiable<Integer> {
 	public final int clusterID;
 	public final int k;
 	public final List<Kmer> kmerList;
+	public final List<Boolean> forwardList;
+	public final List<Boolean> reverseList;
 	private double[] computedConsensus = null;
 	public KmerCluster(int clusterID, KmerCluster... kcs) {
 		this.clusterID = clusterID;
 		this.k = kcs[0].k;
 		kmerList = new ArrayList<>();
+		forwardList = new ArrayList<>();
+		reverseList = new ArrayList<>();
 		computedConsensus = new double[k];
 		for (KmerCluster kc : kcs) {
 			kmerList.addAll(kc.kmerList);
+			forwardList.addAll(kc.forwardList);
+			reverseList.addAll(kc.reverseList);
 			double[] sizes = kc.getConsensusSizes();
 			for (int i = 0; i < k; i++)
 				computedConsensus[i] += sizes[i] * kc.kmerList.size();
@@ -62,17 +68,27 @@ public class KmerCluster implements Identifiable<Integer> {
 		this.clusterID = clusterID;
 		this.k = k;
 		kmerList = new ArrayList<>();
+		forwardList = new ArrayList<>();
+		reverseList = new ArrayList<>();
 	}
 	
 	
 	public void addKmer(Kmer kmer) {
+		addKmer(kmer, true, false); // Assume a forward kmer if not clearly specified
+//		kmerList.add(kmer);
+//		computedConsensus = null; // Implement later
+	}
+	public void addKmer(Kmer kmer, boolean forward, boolean reverse) {
 		kmerList.add(kmer);
 		computedConsensus = null; // Implement later
 	}
 
 	public void removeKmer(Kmer kmer) {
 		// Slow using list
-		kmerList.remove(kmer);
+		int index = kmerList.indexOf(kmer);
+		kmerList.remove(index);
+		forwardList.remove(index);
+		reverseList.remove(index);
 		computedConsensus = null;
 	}
 
@@ -82,13 +98,23 @@ public class KmerCluster implements Identifiable<Integer> {
 	private void computeConsensus() {
 		// Average
 		double[] sizes = new double[k];
-		for (Kmer kmer : kmerList)
-			for (int i = 0; i < k; i++)
-				sizes[i] += kmer.get(i);
+		for (int index = 0; index < kmerList.size(); index++) {
+			Kmer kmer = kmerList.get(index);
+			// If forward, no matter reverse matches, only count forward
+			// If not forward, no matter reverse matches, only count reverse 
+			if (forwardList.get(index))
+				for (int i = 0; i < k; i++)
+					sizes[i] += kmer.get(i);
+			else
+				for (int i = 0; i < k; i++)
+					sizes[k - i - 1] += kmer.get(i);
+			
+		}
 		for (int i = 0; i < k; i++)
 			sizes[i] /= kmerList.size();
 		computedConsensus = sizes;
 	}
+	
 	public double[] getConsensusSizes() {
 		if (computedConsensus == null)
 			computeConsensus();

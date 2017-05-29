@@ -130,7 +130,7 @@ public class ExtendOptionParser extends OptionParser {
 		list.add(s.trim());
 		return list;
 	}
-
+	
 	@Override
 	public void printHelpOn(OutputStream sink) {
 		int paragraphLength = 75;
@@ -236,7 +236,7 @@ public class ExtendOptionParser extends OptionParser {
 			e.printStackTrace();
 		}
 	}
-*/
+	*/
 	@Override
 	public OptionSet parse(String... arguments) {
 		// To assign the non-option values to the last occurring option by adding extra option

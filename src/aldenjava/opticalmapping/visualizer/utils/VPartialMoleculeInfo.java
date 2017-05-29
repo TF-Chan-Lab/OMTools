@@ -31,8 +31,8 @@ package aldenjava.opticalmapping.visualizer.utils;
 
 public class VPartialMoleculeInfo {
 	// Signal-based
-	public final int startSig;
-	public final int stopSig;
+	public int startSig;
+	public int stopSig;
 	public VPartialMoleculeInfo(int startSig, int stopSig) {
 		super();
 		if (startSig == stopSig)
@@ -44,5 +44,10 @@ public class VPartialMoleculeInfo {
 	}
 	public boolean isReverse() {
 		return stopSig < startSig;
+	}
+	public void reverse() {
+		int tmp = startSig;
+		startSig = stopSig;
+		stopSig = tmp;
 	}
 }

@@ -30,9 +30,16 @@
 package aldenjava.opticalmapping.multiplealignment;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import aldenjava.opticalmapping.data.data.DataNode;
 /**
  * GroupingEntry represents a collinear block, which contains none or one segment per query
  * @author Alden
@@ -40,17 +47,30 @@ import java.util.Map.Entry;
  */
 public class GroupingEntry {
 	public final String name;
-//	final List<SingleGroup> groups;
-	LinkedHashMap<String, SingleGroup> groups;
-//	GroupingEntry directLastEntry = null;
+	public final LinkedHashMap<String, SingleGroup> groups;
 	public GroupingEntry(String name, LinkedHashMap<String, SingleGroup> groups) {
 		super();
 		this.name = name;
 		this.groups = groups;
 	}
 
-
+	public GroupingEntry(String name, GroupingEntry... entries) {
+		super();
+		this.name = name;
+		groups = new LinkedHashMap<>();
+		for (GroupingEntry entry : entries)
+			entry.groups.forEach((key, value) -> {
+				if (groups.containsKey(key))
+					throw new IllegalArgumentException("Grouping entries contain more than one segment from the same query: " + key + ": " + value + " and " + key + ": " + groups.get(key));
+				groups.put(key, value);
+//				groups.put(key, new SingleGroup(value.segment, value.orientation));	
+			});
+	}
 	public boolean canMerge(GroupingEntry entry) {
+		return Collections.disjoint(this.groups.keySet(), entry.groups.keySet());
+	}
+	
+	public boolean canDirectlyConnect(GroupingEntry entry) {
 		if (this.getTotalNonEmtpySegments() != entry.getTotalNonEmtpySegments())
 			return false;
 		
@@ -66,29 +86,20 @@ public class GroupingEntry {
 		}
 		return true;
 		
-//		for (int i = 0; i < groups.size(); i++) {
-//			if (this.groups.get(i) == null) {
-//				if (entry.groups.get(i) != null)
-//					return false;
-//			}
-//			else 
-//				if (entry.groups.get(i) == null)
-//					return false;
-//				else {
-//					if (this.groups.get(i).orientation != entry.groups.get(i).orientation)
-//						return false;
-//					else
-//						if (this.groups.get(i).segment != entry.groups.get(i).segment - this.groups.get(i).orientation) 
-//							return false;
-//				}
-//		}
-//		return true;
 	}
 
 	public int getTotalNonEmtpySegments() {
 		return groups.size();
 	}
 
+	public long getAverageSize(LinkedHashMap<String, DataNode> dataMap) {
+		if (groups.size() == 0)
+			throw new RuntimeException("No segment in grouping entry for calculation of segment size.");
+		long sum = 0;
+		for (String key : this.groups.keySet())
+			sum += dataMap.get(key).getRefl(groups.get(key).segment);
+		return sum / groups.size();
+	}
 
 //	public void combine(GroupingEntry entry) {
 //		for (int i = 0; i < groups.size(); i++) {
@@ -115,17 +126,6 @@ public class GroupingEntry {
 				match++;
 			}
 		}
-//		for (int i = 0; i < groups.size(); i++) {
-//			if (this.groups.get(i) == null || entry.groups.get(i) == null)
-//				continue;
-//			int thisOrientation = this.groups.get(i).orientation * reverseThis;
-//			int entryOrientation = entry.groups.get(i).orientation * reverseEntry;
-//			if ((thisOrientation == entryOrientation) 
-//					&& ((thisOrientation == 1 && this.groups.get(i).segment == entry.groups.get(i).segment - 1) 
-//							|| (thisOrientation == -1 && this.groups.get(i).segment == entry.groups.get(i).segment + 1))) {
-//				match++;
-//			}
-//		}
 		return match;
 	}
 	public int getConnectEntryRearrangements(GroupingEntry entry, int reverseThis, int reverseEntry) {
@@ -144,21 +144,49 @@ public class GroupingEntry {
 			}
 		}
 
-//		for (int i = 0; i < groups.size(); i++) {
-//			if (this.groups.get(i) == null || entry.groups.get(i) == null)
-//				continue;
-//			int thisOrientation = this.groups.get(i).orientation * reverseThis;
-//			int entryOrientation = entry.groups.get(i).orientation * reverseEntry;
-//			if ((thisOrientation != entryOrientation) 
-//					|| ((thisOrientation== 1 && this.groups.get(i).segment != entry.groups.get(i).segment - 1) 
-//							|| (thisOrientation == -1 && this.groups.get(i).segment != entry.groups.get(i).segment + 1))) {
-//				rearrangment++;
-//			}
-//		}
+		return rearrangment;
+	}
+	
+	public int getConnectReferenceEntryRearrangements(GroupingEntry entry, int reverseThis, int reverseEntry, List<String> marefs) {
+		int rearrangment = 0;
+		for (String key : marefs) {
+			SingleGroup thisGroup = this.groups.get(key);
+			SingleGroup entryGroup = entry.groups.get(key);
+			if (thisGroup == null || entryGroup == null)
+				continue;
+			int thisOrientation = thisGroup.orientation * reverseThis;
+			int entryOrientation = entryGroup.orientation * reverseEntry;
+			if ((thisOrientation != entryOrientation) 
+					|| ((thisOrientation== 1 && thisGroup.segment != entryGroup.segment - 1) 
+							|| (thisOrientation == -1 && thisGroup.segment != entryGroup.segment + 1))) {
+				rearrangment++;
+			}
+		}
+
 		return rearrangment;
 	}
 	
 	
+//	public Map<String, EntryMatch> getConnectEntryMatchStates(GroupingEntry entry, int reverseThis, int reverseEntry) {
+//		Map<String, EntryMatch> entryMatches = new HashMap<>();
+//		for (String key : this.groups.keySet()) {
+//			SingleGroup thisGroup = this.groups.get(key);
+//			SingleGroup entryGroup = entry.groups.get(key);
+//			if (entryGroup == null)
+//				continue;
+//			int thisOrientation = thisGroup.orientation * reverseThis;
+//			int entryOrientation = entryGroup.orientation * reverseEntry;
+//			if ((thisOrientation == entryOrientation) 
+//					&& ((thisOrientation == 1 && thisGroup.segment == entryGroup.segment - 1) 
+//							|| (thisOrientation == -1 && thisGroup.segment == entryGroup.segment + 1))) {
+//				entryMatches.put(key, EntryMatch.Match);
+//			}
+//			else
+//				entryMatches.put(key, EntryMatch.Rearrangement);
+//		}
+//		return entryMatches;
+//
+//	}
 	
 	public GroupingEntry getReverse(String name) {
 //		List<SingleGroup> newGroups = new ArrayList<>();
@@ -177,6 +205,13 @@ public class GroupingEntry {
 		return new GroupingEntry(name, newGroups);
 	}
 	
+	public Set<SegmentIdentifier> getSegmentIdentifiers() {
+		Set<SegmentIdentifier> sis = new HashSet<>();
+		groups.forEach((group, sg) -> {
+			sis.add(new SegmentIdentifier(group, sg.segment));
+		});
+		return sis;
+	}
 	/*
 	public boolean canConnect(GroupingEntry entry) {
 		assert this.groups.size() == entry.groups.size();
@@ -280,6 +315,7 @@ public class GroupingEntry {
 
 		return s;
 	}
+
 
 }
 

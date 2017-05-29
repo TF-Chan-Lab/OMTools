@@ -33,6 +33,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.Line2D;
 
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 
@@ -40,16 +41,25 @@ public class VIndel extends VSpace {
 
 	public VIndel(long reflength, long mollength) {
 		super(reflength, mollength);
-		this.setToolTipText(String.format("%s: Ref Length: %d; Mole Length: %d; Size changes: %d", this.getType(), reflength, mollength, mollength - reflength));
 	}
 
 	@Override
 	public void autoSetSize() {
-		int molSpaceWidth = (int) (ViewSetting.minSVObjectSize / dnaRatio * ratio);
-		if (mollength > reflength)
-			this.setSize(Math.max((int) (reflength / dnaRatio * ratio), molSpaceWidth), (int) (ViewSetting.bodyHeight * ratio));
-		else
-			this.setSize((int) (reflength / dnaRatio * ratio), (int) (ViewSetting.bodyHeight * ratio));
+		this.setSize((int) ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / dnaRatio * ratio), (int) (ViewSetting.bodyHeight * ratio));
+	}
+
+	// Override the method to allow update on tool tip text
+	@Override
+	public void setMoleDNALength(long molDNALength) {
+		super.setMoleDNALength(molDNALength);
+		this.updateToolTipText();
+	}
+
+	// Override the method to allow update on tool tip text
+	@Override
+	public void setRefDNALength(long refDNALength) {
+		super.setRefDNALength(refDNALength);
+		this.updateToolTipText();
 	}
 
 	@Override
@@ -58,17 +68,15 @@ public class VIndel extends VSpace {
 		Graphics2D g = (Graphics2D) graphics;
 		g.setStroke(new BasicStroke((float) (2 * ratio)));
 		g.setPaint(Color.BLACK);
-		int refSpaceWidth = (int) (reflength / dnaRatio * ratio);
-		int molSpaceWidth = (int) (mollength / dnaRatio * ratio);
-		molSpaceWidth = (int) (ViewSetting.minSVObjectSize / dnaRatio * ratio);
-		g.drawLine(molSpaceWidth > refSpaceWidth ? (molSpaceWidth - refSpaceWidth) / 2 : 0, this.getHeight() / 2, molSpaceWidth > refSpaceWidth ? (molSpaceWidth + refSpaceWidth) / 2 : refSpaceWidth, this.getHeight() / 2);
+		
+		double refSpaceWidth = (reflength / dnaRatio * ratio);
+		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
+		g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
 		// Insertion, draw triangle
 		if (mollength > reflength) {
-			int triangleMidPt = (refSpaceWidth > molSpaceWidth ? refSpaceWidth : molSpaceWidth) / 2;
-			int[] triangleX = new int[] { triangleMidPt, triangleMidPt - molSpaceWidth / 2, triangleMidPt + molSpaceWidth / 2 };
+			int[] triangleX = new int[] { (int) midPtX, (int) (midPtX - ViewSetting.SVObjectSize / dnaRatio * ratio / 2), (int) (midPtX + ViewSetting.SVObjectSize / dnaRatio * ratio / 2) };
 			int[] triangleY = new int[] { this.getHeight() / 2, 1, 1 };
 			g.drawPolygon(triangleX, triangleY, 3);
-			
 		}
 	}
 
@@ -81,5 +89,8 @@ public class VIndel extends VSpace {
 		else
 			return "None";
 	}
-
+	
+	private void updateToolTipText() {
+		this.setToolTipText(String.format("%s: Ref Length: %d; Mole Length: %d; Size changes: %d", this.getType(), reflength, mollength, mollength - reflength));
+	}
 }

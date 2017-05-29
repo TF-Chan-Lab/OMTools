@@ -1,0 +1,142 @@
+Version 1.3
+Add SVDetection module, improve OMView function, fix bugs in other classes
+
+Modified classes:
+OMTools
+- Added SVDetection in the menu
+MultipleAlignmentFormat
+- Added static method isValidCollinearBlockFormat
+OptMapResultWriter
+- Fix spelling error
+OMBlastCore
+- Added option allowEqualRefQuery
+OMBlastMapper
+- Added option allowEqualRefQuery
+ProgressPrinter
+- Added update method
+KmerCluster
+- Added support for forward/reverse clustering
+CollinearBlock
+- Retain the name in GroupingEntry in toSingleSegmentCollinearBlocks method, instead of creating a new name
+- Added reverse and getSize method
+CollinearBlockReader
+- Rewrite for format change of multiple alignment
+CollinearBlockWriter
+- Rewrite for format change of multiple alignment
+GroupingEntry
+- Rewrite to use Map instead of List for better performance
+SingleGroup
+- Added constructor
+DataStatistics
+- Rewrite the DataStatistics class
+ResultStatistics
+- Fixed bug on not able to import alignment results without data incorporated in the same file
+EnzymeSiteNode
+- Added warning for incorrect enzyme name
+ResultTools
+- Fixed bug on not resetting minjoinscore to 0
+DataModule
+- Added support for collinear block order
+OMView
+- Rewrite change setting on developer options
+- Added output option menu
+- Rewrite loading of collinear block order
+- Fixed bug on displaying the data selection menu when no data is loaded as molecules / reference
+- Enable options at command line: dnaratio, zoom and viewunmap, and viewsettingin for loading developer options
+- Enable a hidden option (datacolormap) that is used to recolor the molecules. Experimental. 
+- Fixed bug on not loading annotations in start-up of regional view
+- Accepts loading of multiple alignment (cbl) without the order file (cbo)
+ViewSetting
+- Added options: 
+	coverageHeight
+	variabilityHeight
+	maxViewVariability
+	objBorderX
+	objBorderY
+	defaultLeftSpaceAfterGoto
+	defaultTopSpaceAfterGoto
+	coverageBGColor	
+	coverageColor
+	variationColor1
+	variationColor2
+	displayRuler (Moved option to ViewSetting from VRuler)
+	rulerHeight
+	rulerSmallMark (Moved option to ViewSetting from VRuler)
+	rulerLargeMark (Moved option to ViewSetting from VRuler)
+	rulerSmallMarkColor
+	rulerLargeMarkColor
+	rulerBodyColor
+	displayQueryName
+	queryNameColor
+	maBGColor1
+	maBGColor2
+- Changed minSVObjectSize to SVObjectSize
+- Rewrite changeSetting method to allow input of all variable types in ViewSetting
+- Added displaySetting options (for output options in OMView menu)
+VPartialMoleculeInfo
+- Added reverse method
+AlignmentView
+- Disable gotoMenu
+AnchorView
+- Display query names
+- Added support for gotoMenu
+MoleculeView
+- Moved previous goto options into the gotoMenu
+- Added support for data color. Experimental.
+MultipleOpticalMapsView
+- A rewrite of the whole class
+- A different block layout algorithm
+- Displaying query names
+- Support for gotoMenu
+- Use VMultiAlignMolecule instead of VMolecule
+- Support for new collinear block ordering
+- Added variability and coverage calculation
+- Update reverse function
+- Removed sort and save function temporarily
+RegionalView
+- Display query names
+- Added support for gotoMenu
+ScrollablePanel
+- Added support for gotoMenu
+AnnotationPanel
+- Disable gotoMenu
+VIndel
+- Fixed bug in small gap size
+- Tool tip text update upon change in ref / mol length
+VInversion
+- Fixed bug in small gap size
+VMapMolecule
+- Added support for data color. Experimental.
+VRearrangement
+- Fixed bug in small gap size
+VRuler
+- Moved options to ViewSetting
+VSpace
+- change constructor to use setRefDNALength and setMoleDNALength
+VTranslocation
+- Update on minSVObjectSize to SVObjectSize
+
+
+New classes: 
+SVDetection
+- A class to call SV from alignment results
+LocalConsensusPattern
+- A class with a static method to generate local consensus pattern, used in reconstructing inserted patterns
+DataSignalCountNode
+- A class used in signal count in SVDetection
+CollinearBlockOrder
+- A class for new query ordering in multiple alignment
+VCoverage
+- A new VObject that represents the coverage ub MultipleOpticalMapsView
+VVariability
+- A new VObject that represents the variability in MultipleOpticalMapsView
+ElementsGroup
+IntegerKeyFactory
+KeyFactory
+NumberOperation
+UnweightedRange
+WeightedRange
+- A set of classes of UnweightedRange and WeightedRange
+
+Example file
+Updated Ecoli_MA.cbl

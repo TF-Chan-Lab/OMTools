@@ -43,8 +43,8 @@ public class VSpace extends VObject {
 	protected long mollength;
 
 	public VSpace(long reflength, long mollength) {
-		this.reflength = reflength;
-		this.mollength = mollength;
+		this.setRefDNALength(reflength);
+		this.setMoleDNALength(mollength);
 	}
 
 	@Override

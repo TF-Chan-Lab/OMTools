@@ -41,6 +41,7 @@ import aldenjava.opticalmapping.GenomicPosNode;
 import aldenjava.opticalmapping.data.data.DataNode;
 import aldenjava.opticalmapping.data.mappingresult.OptMapResultNode;
 import aldenjava.opticalmapping.miscellaneous.InvalidVObjectException;
+import aldenjava.opticalmapping.visualizer.OMView;
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 import aldenjava.opticalmapping.visualizer.utils.VUtils;
 import aldenjava.opticalmapping.visualizer.viewpanel.RegionalView;
@@ -283,9 +284,10 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 						float b = 0;
 						if (r >= 1) r = 1;
 						if (g >= 1) g = 1;
-//						System.out.println(querySize + "\t" + refSize + "\t" + scale + "\t" + r + "\t" + b);
+
 						Color color = new Color(r, g, b);
 						mapMole.addRegionColor(result.mappedstrand==1?new SimpleLongLocation(d.refp[mapSignals[i - 1]], d.refp[mapSignals[i]]):new SimpleLongLocation(d.refp[mapSignals[i]], d.refp[mapSignals[i - 1]]), color);
+
 //						Color color;
 						
 //						int meas = 500;
@@ -329,9 +331,16 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 							
 						
 					}
+					// Temporarily added
+					if (OMView.dataColorMap.containsKey(result.parentFrag.name)) {
+						for (int i = 0; i < d.getTotalSegment(); i++)	
+							if (OMView.dataColorMap.get(d.name).contains(i))
+								mapMole.addRegionColor(new SimpleLongLocation(d.refp[i - 1], d.refp[i]), Color.BLUE);
+					}
 
 				}
-					
+				
+
 				// Set up color for mapped signals
 				int[] mapSignals = result.getMapSignal();
 				mapMole.addSignalColor(mapSignals, ViewSetting.regionalViewAlignedSignalColor);
@@ -393,8 +402,16 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 					
 					unmapMole.setStartEndPoint(new SimpleLongLocation(unmapstartloc, unmapstoploc));
 					unmapMole.setReverse(result.mappedstrand == -1);
-					unmappedLen = unmapstop - unmapstart + 1; // + 1 here?
+					unmappedLen = unmapstoploc - unmapstartloc + 1; // + 1 here?
 //					unmapPart = result.parentFrag.subRefNode(unmapstart, unmapstop, true);
+					// Temporarily added
+					if (OMView.dataColorMap.containsKey(result.parentFrag.name)) {
+						for (int i = 0; i < result.parentFrag.getTotalSegment(); i++)	
+							if (OMView.dataColorMap.get(result.parentFrag.name).contains(i))
+								unmapMole.addRegionColor(new SimpleLongLocation(i==0?1:result.parentFrag.refp[i - 1], i==result.parentFrag.getTotalSegment()-1?result.parentFrag.size:result.parentFrag.refp[i]), Color.BLUE);
+					}
+
+					
 				}
 				
 				if (lastResult != null)
@@ -416,7 +433,7 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 				if (unmapMole != null)
 					unalignedMoleculeList.add(unmapMole);
 				
-			
+
 				moleculelist.add(mapMole);
 			}
 						
@@ -457,6 +474,13 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 			VSpace unalignedSpace = new VSpace(accumulateUnalignedSpace, accumulateUnalignedSpace);
 			unalignedMoleculeList.add(unalignedSpace);
 			unalignedMoleculeList.add(finalUnmapMole);
+			
+			// Temporarily added
+			if (OMView.dataColorMap.containsKey(finalResult.parentFrag.name)) {
+				for (int i = 0; i < finalResult.parentFrag.getTotalSegment(); i++)	
+					if (OMView.dataColorMap.get(finalResult.parentFrag.name).contains(i))
+						finalUnmapMole.addRegionColor(new SimpleLongLocation(i==0?1:finalResult.parentFrag.refp[i - 1], i==finalResult.parentFrag.getTotalSegment()-1?finalResult.parentFrag.size:finalResult.parentFrag.refp[i]), Color.BLUE);
+			}
 		}
 		
 //		moleculelist.add(finalUnmapMole);	
@@ -756,17 +780,8 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 		super.setRatio(ratio);
 	}
 	
-		
 	
-//	public void setUnalignedPortionVisible(boolean visible)
-//	{
-//		for (VObject obj : moleculelist)
-//			if (obj.getClass() == VMolecule.class)
-//				((VMolecule) obj).setUnalignedPortionVisible(visible);
-//	}
-	
-	public VAlignment createAlignment(LinkedHashMap<String, DataNode> optrefmap)
-	{
+	public VAlignment createAlignment(LinkedHashMap<String, DataNode> optrefmap) {
 		return new VAlignment(optrefmap.get(resultlist.get(0).mappedRegion.ref), resultlist);
 	}
 	
@@ -774,7 +789,6 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 
 	@Override
 	public int compareTo(VMapMolecule o) {
-		// TODO Auto-generated method stub
 		if (this.getMappedPos().compareTo(o.getMappedPos()) != 0)
 			return this.getMappedPos().compareTo(o.getMappedPos());
 		else
@@ -835,6 +849,7 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 	}
 	
 	
+	@Override
 	public long getDNALength()
 	{
 		// unfinish

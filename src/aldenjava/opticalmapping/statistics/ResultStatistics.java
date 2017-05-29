@@ -340,11 +340,16 @@ public class ResultStatistics {
 		boolean checkStrand = options.valueOf(ocheckstrand);
 		for (int i = 0; i < optresins.size(); i++)
 		{
-			ResultStatistics resultstat = new ResultStatistics(optrefmap, OptMapDataReader.readAllData(optmapins.get(i)));
+			LinkedHashMap<String, DataNode> dataMap = OptMapDataReader.readAllData(optmapins.get(i));
+			ResultStatistics resultstat = new ResultStatistics(optrefmap, dataMap);
 			resultstat.checkStrand = checkStrand;
 //			if (optmapins != null)
 //				resultstat.importFragmentInfo(OptMapDataReader.readAllData(optmapins.get(i)));
+			
+			
 			OptMapResultReader omrr = new OptMapResultReader(optresins.get(i));
+			if (options.has("optmapin"))
+				omrr.importFragInfo(dataMap);
 			List<OptMapResultNode> resultlist;
 			while ((resultlist = omrr.readNextList()) != null)
 				resultstat.update(resultlist);
