@@ -35,6 +35,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
 import aldenjava.opticalmapping.data.annotation.AnnotationNode;
+import aldenjava.opticalmapping.visualizer.ViewSetting;
 
 public class VAnno extends VObject implements Comparable<VAnno>{
 	public AnnotationNode anno;
@@ -51,13 +52,13 @@ public class VAnno extends VObject implements Comparable<VAnno>{
 	@Override
 	public long getDNALength() 
 	{
-		return anno.region.length() + 100000;
+		return anno.region.length() + ViewSetting.annotationTextLength;
 	}
 
 	@Override
 	public void autoSetSize() 
 	{
-		setSize((int) (((anno.region.length() + 100000) / dnaRatio) * ratio), (int) (15 * ratio));
+		setSize((int) (((anno.region.length() + ViewSetting.annotationTextLength) / dnaRatio) * ratio), (int) (ViewSetting.annotationBlockHeight * ratio));
 		if (this.getWidth() == 0)
 			this.setSize(1, this.getHeight());
 	}

@@ -32,17 +32,18 @@ package aldenjava.opticalmapping.miscellaneous;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.output.NullOutputStream;
+import org.apache.commons.lang.StringUtils;
 
 import joptsimple.HelpFormatter;
 import joptsimple.OptionDescriptor;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpecBuilder;
-
-import org.apache.commons.io.output.NullOutputStream;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * A class extending the <code>OptionParser</code> from the package joptsimple. This allows better help menu layout
@@ -60,26 +61,29 @@ public class ExtendOptionParser extends OptionParser {
 	private List<String> recentOptionList;
 	private List<String> recentOptionDescriptionList;
 	private OptionParser recentparser;
-	private String title;
-	private String description;
+	private final String title;
+	private final String description;
+	private Map<String, String> aliasMap;
 	
-	public ExtendOptionParser() {
-		super();
-		header = new ArrayList<String>();
-		level = new ArrayList<Integer>();
-		optionList = new ArrayList<List<String>>();
-		optionDescriptionList = new ArrayList<List<String>>();
-		recentOptionList = null;
-		recentOptionDescriptionList = null;
+ 	public ExtendOptionParser() { 
+		this(null, null);
 	}
 
 	public ExtendOptionParser(String title) {
 		this(title, null);
 	}
 	public ExtendOptionParser(String title, String description) {
-		this();
+		super();
 		this.title = title;
 		this.description = description;
+		header = new ArrayList<String>();
+		level = new ArrayList<Integer>();
+		optionList = new ArrayList<List<String>>();
+		optionDescriptionList = new ArrayList<List<String>>();
+		recentOptionList = null;
+		recentOptionDescriptionList = null;
+		aliasMap = new HashMap<>();
+
 	}
 
 	public void addHeader(String s, int level) {
@@ -185,7 +189,10 @@ public class ExtendOptionParser extends OptionParser {
 		}
 	}
 	
-
+	public void addHiddenAlias(String option, String... aliases) {
+		for (String alias : aliases)
+			aliasMap.put(alias, option);
+	}
 	
 	// This method is used to generate part of the software manual
 	/*
@@ -202,7 +209,7 @@ public class ExtendOptionParser extends OptionParser {
 			recentparser = null;
 			if (title != null) {
 				sink.write(("\\section{" + title + "}\n").getBytes());
-				description = description.replaceAll("in\\ssilico", "\\\\textit{in silico}");
+				String description = this.description.replaceAll("in\\ssilico", "\\\\textit{in silico}");
 				sink.write((description + "\n").getBytes());
 			}
 			
@@ -248,6 +255,10 @@ public class ExtendOptionParser extends OptionParser {
 		for (String s : arguments) {
 			if (s.startsWith("-")) // option
 			{
+				int index = s.lastIndexOf('-');
+				String tmpOption = s.substring(index + 1);
+				if (aliasMap.containsKey(tmpOption))
+					s = s.substring(0, index + 1) + aliasMap.get(tmpOption);
 				currentOption = s;
 				prevIsOption = true;
 			} else {

@@ -63,7 +63,7 @@ import aldenjava.script.PrecisionRecallGraphDataGenerator;
  */
 public class OMTools {
 
-	public final static String version = "OMTools Version 1.3";
+	public final static String version = "OMTools Version 1.3a";
 	public final static String author = "Alden Leung";
 	
 	private static void displayOptions() throws IOException, MapperConstructionException {		
@@ -92,6 +92,7 @@ public class OMTools {
 		PrecisionRecallGraphDataGenerator.main(arg);
 		System.out.println("\\part{Visualization}");
 		OMView.main(new String[] {"--help"});
+		System.out.println("\\input{omview}");
 		System.exit(0);
 	}
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, MapperConstructionException

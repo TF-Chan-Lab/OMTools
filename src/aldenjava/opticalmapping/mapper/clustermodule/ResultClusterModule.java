@@ -878,6 +878,7 @@ public class ResultClusterModule implements SelectableMode{
 	{
 		parser.addHeader("Alignment Joining Options", level);
 		parser.accepts("alignmentjoinmode", "Mode. 0: No joining. 1: Standard indel joining. 2: Standard indel-inv joining. 3. Standard transloc joining").withRequiredArg().ofType(Integer.TYPE).defaultsTo(0);
+		parser.addHiddenAlias("alignmentjoinmode", "clustermode");
 		parser.accepts("closeref", "The maximum distance (reference) between two partial alignments to be joined").withRequiredArg().ofType(Long.class).defaultsTo((long) 250000);
 		parser.accepts("closefrag", "The maximum distance (query) between two partial alignments to be joined").withRequiredArg().ofType(Long.class).defaultsTo((long) 250000);
 		parser.accepts("minmatch", "Minimum matching signals to be considered as a valid partial alginment.").withRequiredArg().ofType(Integer.class).defaultsTo(3);
@@ -892,11 +893,16 @@ public class ResultClusterModule implements SelectableMode{
 		parser.accepts("localpenalty", "Enable local-alignment penalty for the final alignment (treated as global alignment)").withRequiredArg().ofType(Boolean.class).defaultsTo(false);
 		
 		parser.accepts("minjoinscore", "Minimum score of the joined final alignment").withRequiredArg().ofType(Integer.class).defaultsTo(30);
+		parser.addHiddenAlias("minjoinscore", "minclusterscore");
 		parser.accepts("minconf", "Minimum confidence (uniqueness) of the final alignment").withRequiredArg().ofType(Double.class).defaultsTo(0.4);
 		parser.accepts("minjoinedfragratio", "Minimum ratio of aligned length against query length").withRequiredArg().ofType(Double.class).defaultsTo(-1.0);
+		parser.addHiddenAlias("minjoinedfragratio", "minclusterfragratio");
 		parser.accepts("minjoinedsigratio", "Minimum ratio of number of aligned signals against total number of query signals").withRequiredArg().ofType(Double.class).defaultsTo(-1.0);
+		parser.addHiddenAlias("minjoinedsigratio", "minclustersigratio");
 		parser.accepts("overlapalign", "Allow overlapping final alignments to be output").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
+		parser.addHiddenAlias("overlapalign", "overlapcluster");
 		parser.accepts("maxalignitem", "Maximum number of final alignments output. -1: No limit on the number of final alignments").withRequiredArg().ofType(Integer.class).defaultsTo(1);
+		parser.addHiddenAlias("maxalignitem", "maxclusteritem");
 	}
 
 	public ResultClusterModule copy() {

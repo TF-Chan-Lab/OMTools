@@ -1,3 +1,34 @@
+Version 1.3a
+Add support for AGP file, support old option names
+
+Modified classes:
+AnnotationFormat
+- Added AGP file format
+ExtendOptionParser
+- Added alias option
+ResultClusterModule
+- Added alternative options (old option names)
+OMView
+- Added alternative options (old option names)
+- Added support on anchor-region input
+ViewSetting
+- Added view settings: gapStrokeWidth, gapStrokeColor, annotationTextLength, annotationBlockHeight
+- Reorganized options
+VAnno
+VIndel
+VInversion
+VRearrangement
+VTranslocation
+- Modified to use new ViewSetting
+- Do not display tool tip when length <= 0
+
+New classes:
+AGPReader
+AGPNode
+- Added class for AGP file support
+
+
+
 Version 1.3
 Add SVDetection module, improve OMView function, fix bugs in other classes
 

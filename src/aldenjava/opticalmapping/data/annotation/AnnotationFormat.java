@@ -41,7 +41,8 @@ public enum AnnotationFormat {
 	GVF (1, "Genome Variation Format (GVF)", "gvf"),
 	GTF (2, "General Transfer Format (GTF)", "gtf"),
 	GFF (3, "General Feature Format (GFF)", "gff"),
-	OSV (4, "Optical Mapping SV Format (OSV)", "osv");
+	OSV (4, "Optical Mapping SV Format (OSV)", "osv"),
+	AGP (5, "AGP Format (AGP)", "agp");
 
 	private final int format;
 	private final String description;

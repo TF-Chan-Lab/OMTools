@@ -83,6 +83,8 @@ import aldenjava.opticalmapping.application.svdetection.StandardSVNode;
 import aldenjava.opticalmapping.application.svdetection.StandardSVReader;
 import aldenjava.opticalmapping.data.DataFormat;
 import aldenjava.opticalmapping.data.MultipleAlignmentFormat;
+import aldenjava.opticalmapping.data.annotation.AGPNode;
+import aldenjava.opticalmapping.data.annotation.AGPReader;
 import aldenjava.opticalmapping.data.annotation.AnnotationFormat;
 import aldenjava.opticalmapping.data.annotation.AnnotationNode;
 import aldenjava.opticalmapping.data.annotation.BEDNode;
@@ -1271,7 +1273,16 @@ public class OMView extends JFrame implements PropertyChangeListener {
 					}
 					svr.close();
 					return svlist;
-					
+				case AGP:
+					AGPReader agpr = new AGPReader(stream);
+					AGPNode agp;
+					List<AGPNode> agpList = new ArrayList<AGPNode>();
+					while ((agp = agpr.read()) != null) {
+						publish(agp);
+						agpList.add(agp);
+					}
+					agpr.close();
+					return agpList;
 				default:
 					// Unknown format
 					stream.close();
@@ -1810,15 +1821,22 @@ public class OMView extends JFrame implements PropertyChangeListener {
 		ExtendOptionParser parser = new ExtendOptionParser(OMView.class.getSimpleName(), "Visualizes optical mapping data. OMView provides a GUI to visualize optical mapping data for different purposes. ");	
 		parser.addHeader("Data Loading", 1);
 		OptionSpec<String> viewrefin = parser.accepts("viewrefin", "Load references").withRequiredArg().ofType(String.class);
+		parser.addHiddenAlias("viewrefin", "refmapin");
 		OptionSpec<String> viewmapin = parser.accepts("viewmapin", "Load molecules").withRequiredArg().ofType(String.class);
+		parser.addHiddenAlias("viewmapin", "optmapin");
 		OptionSpec<String> viewresin = parser.accepts("viewresin", "Load alignment results").withRequiredArg().ofType(String.class);
+		parser.addHiddenAlias("viewresin", "optresin");
 		OptionSpec<String> viewcblin = parser.accepts("viewcblin", "Load collinear blocks").withRequiredArg().ofType(String.class);
+		parser.addHiddenAlias("viewcblin", "cblin");
 		OptionSpec<String> viewcboin = parser.accepts("viewcboin", "Load collinear blocks (order)").withRequiredArg().ofType(String.class);
+		parser.addHiddenAlias("viewcboin", "cboin");
 		OptionSpec<String> viewcbcin = parser.accepts("viewcbcin", "Load collinear blocks (color)").withRequiredArg().ofType(String.class);
+		parser.addHiddenAlias("viewcbcin", "cbcin");
 		OptionSpec<String> viewannoin = parser.accepts("viewannoin", "Load annotations").withRequiredArg().ofType(String.class);
 		parser.addHeader("View Opening", 1);
 		OptionSpec<String> viewregion = parser.accepts("viewregion", "Show a specific region on a regional view").withRequiredArg().ofType(String.class);
 		OptionSpec<String> viewanchor = parser.accepts("viewanchor", "Show a specific anchor on an anchor view").withRequiredArg().ofType(String.class);
+		OptionSpec<String> viewanchorregion = parser.accepts("viewanchorregion", "Specify the region for the anchor on an anchor view").withRequiredArg().ofType(String.class);
 		OptionSpec<String> viewalignment = parser.accepts("viewalignment", "Show a specific alignment").withRequiredArg().ofType(String.class);
 		OptionSpec<Boolean> viewma = parser.accepts("viewma", "Automatically open multiple alignment view").withRequiredArg().ofType(Boolean.class).defaultsTo(false);
 		OptionSpec<Boolean> viewmolecule = parser.accepts("viewmolecule", "Automatically open molecule view").withRequiredArg().ofType(Boolean.class).defaultsTo(false);
@@ -1950,11 +1968,15 @@ public class OMView extends JFrame implements PropertyChangeListener {
 		if (options.has(viewanchor))
 		{
 			List<LinkedHashMap<VDataType, List<String>>> dataSelections = omview.dataModule.getIndividualDataSelection(VDataType.ALIGNMENT);
-			// Create single tab for each region, while showing multiple panels for different alignment files			
+			// Create single tab for each region, while showing multiple panels for different alignment files
+			List<String> anchorregionlist = viewanchorregion.values(options);
 			List<String> anchorlist = viewanchor.values(options);
-			for (String anchor : anchorlist) {
+			for (int i = 0; i < anchorlist.size(); i++) {
+				String anchor = anchorlist.get(i);
 				AnchorControlPanel controlPanel = omview.createAnchorViewTab(dataSelections);
 				controlPanel.setAnchorPoint(new GenomicPosNode(anchor));
+				if (anchorregionlist.size() > i)
+					controlPanel.setRegion(new GenomicPosNode(anchorregionlist.get(i)));
 			}
 			defaultOpen = false;
 		}		

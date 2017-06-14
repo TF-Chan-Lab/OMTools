@@ -58,8 +58,8 @@ public class VTranslocation extends VSpace {
 	public void paintComponent(Graphics graphics) {
 		super.paintComponent(graphics);
 		Graphics2D g = (Graphics2D) graphics;
-		g.setStroke(new BasicStroke(2));
-		g.setPaint(Color.BLACK);
+		g.setStroke(new BasicStroke((float) (ViewSetting.gapStrokeWidth * ratio)));
+		g.setPaint(ViewSetting.gapStrokeColor);
 		int lineWidth = (int) (ViewSetting.SVObjectSize * 2 / 5 / dnaRatio * ratio);
 		int recWidth = (int) (ViewSetting.SVObjectSize * 3 / 5 / dnaRatio * ratio);
 		if (direction == 1) {

@@ -52,13 +52,15 @@ public class VInversion extends VSpace {
 	public void paintComponent(Graphics graphics) {
 		super.paintComponent(graphics);
 		Graphics2D g = (Graphics2D) graphics;
-		g.setStroke(new BasicStroke((float) (2 * ratio)));
-		g.setPaint(Color.BLACK);
-		
+		g.setStroke(new BasicStroke((float) (ViewSetting.gapStrokeWidth * ratio)));
+		g.setPaint(ViewSetting.gapStrokeColor);
+		// Drawing the mid line
 		double refSpaceWidth = (reflength / dnaRatio * ratio);
 		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
-		g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
+		if (refSpaceWidth > 0)
+			g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
 		
+		// Drawing the arc
 		int midPtY = this.getHeight() / 2;
 		int arcSize = (int) (ViewSetting.SVObjectSize / dnaRatio * ratio);
 		g.drawArc((int) (midPtX - arcSize / 4), midPtY - arcSize / 4, arcSize / 2, arcSize / 2, 180, 360);

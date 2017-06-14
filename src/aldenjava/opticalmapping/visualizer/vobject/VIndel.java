@@ -66,12 +66,14 @@ public class VIndel extends VSpace {
 	public void paintComponent(Graphics graphics) {
 		super.paintComponent(graphics);
 		Graphics2D g = (Graphics2D) graphics;
-		g.setStroke(new BasicStroke((float) (2 * ratio)));
-		g.setPaint(Color.BLACK);
+		g.setStroke(new BasicStroke((float) (ViewSetting.gapStrokeWidth * ratio)));
+		g.setPaint(ViewSetting.gapStrokeColor);
 		
+		// Drawing the mid line
 		double refSpaceWidth = (reflength / dnaRatio * ratio);
 		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
-		g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
+		if (refSpaceWidth > 0)
+			g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
 		// Insertion, draw triangle
 		if (mollength > reflength) {
 			int[] triangleX = new int[] { (int) midPtX, (int) (midPtX - ViewSetting.SVObjectSize / dnaRatio * ratio / 2), (int) (midPtX + ViewSetting.SVObjectSize / dnaRatio * ratio / 2) };
@@ -91,6 +93,9 @@ public class VIndel extends VSpace {
 	}
 	
 	private void updateToolTipText() {
-		this.setToolTipText(String.format("%s: Ref Length: %d; Mole Length: %d; Size changes: %d", this.getType(), reflength, mollength, mollength - reflength));
+		if (reflength  > 0 || mollength > 0)
+			this.setToolTipText(String.format("%s: Ref Length: %d; Mole Length: %d; Size changes: %d", this.getType(), reflength, mollength, mollength - reflength));
+		else
+			this.setToolTipText(null);
 	}
 }
