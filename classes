@@ -29,6 +29,8 @@ src/aldenjava/opticalmapping/data/KmerSetting.java
 src/aldenjava/opticalmapping/data/MultipleAlignmentFormat.java
 src/aldenjava/opticalmapping/data/OMReader.java
 src/aldenjava/opticalmapping/data/OMWriter.java
+src/aldenjava/opticalmapping/data/annotation/AGPNode.java
+src/aldenjava/opticalmapping/data/annotation/AGPReader.java
 src/aldenjava/opticalmapping/data/annotation/AnnotationFormat.java
 src/aldenjava/opticalmapping/data/annotation/AnnotationNode.java
 src/aldenjava/opticalmapping/data/annotation/BEDNode.java
