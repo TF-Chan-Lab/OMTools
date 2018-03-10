@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,9 +29,7 @@
 
 package aldenjava.opticalmapping.multiplealignment;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import aldenjava.opticalmapping.data.data.DataNode;
+import aldenjava.opticalmapping.data.data.SegmentIdentifier;
 /**
  * GroupingEntry represents a collinear block, which contains none or one segment per query
  * @author Alden
@@ -92,7 +91,7 @@ public class GroupingEntry {
 		return groups.size();
 	}
 
-	public long getAverageSize(LinkedHashMap<String, DataNode> dataMap) {
+	public long getAverageSize(Map<String, DataNode> dataMap) {
 		if (groups.size() == 0)
 			throw new RuntimeException("No segment in grouping entry for calculation of segment size.");
 		long sum = 0;
@@ -100,16 +99,6 @@ public class GroupingEntry {
 			sum += dataMap.get(key).getRefl(groups.get(key).segment);
 		return sum / groups.size();
 	}
-
-//	public void combine(GroupingEntry entry) {
-//		for (int i = 0; i < groups.size(); i++) {
-//			if (entry.groups.get(i) == null)
-//				continue;
-////			if (this.groups.get(i) == null)
-//			this.groups.set(i, entry.groups.get(i));
-//		}
-////		directLastEntry = entry;
-//	}
 
 	public int getConnectEntryMatches(GroupingEntry entry, int reverseThis, int reverseEntry) {
 		int match = 0;

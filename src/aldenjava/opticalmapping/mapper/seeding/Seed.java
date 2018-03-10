@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,7 +29,6 @@
 
 package aldenjava.opticalmapping.mapper.seeding;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import aldenjava.opticalmapping.Cigar;
@@ -54,7 +53,17 @@ public class Seed extends Kmer {
 		this.kmerpointer = kmerpointer;
 
 	}
+	public Cigar getCigar(boolean flankingMatch) {
+		StringBuilder precigar = new StringBuilder();
+		for (int i = 0; i < k() + 1; i++)
+			precigar.append('M');
+		if (flankingMatch)
+			return new Cigar(precigar.toString());
+		else
+			return new Cigar(precigar.substring(1, precigar.length() - 1));
 
+	}
+	/*
 	public Cigar getCigar(boolean flankingMatch) {
 		if (kmerpointer.getErrorNo() > 0 && super.getErrorNo() > 0) {
 			System.err.println("Do not support errors in both ref-kmer and frag-kmer.");
@@ -89,7 +98,7 @@ public class Seed extends Kmer {
 			return new Cigar(precigar.substring(1, precigar.length() - 1));
 
 	}
-
+	*/
 	public boolean limitRange(int measure, double ear) {
 		double ubound = 1 + ear;
 		double lbound = 1 - ear;

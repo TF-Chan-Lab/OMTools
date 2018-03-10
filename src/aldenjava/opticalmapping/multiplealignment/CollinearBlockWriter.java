@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -35,28 +35,18 @@ import java.util.List;
 
 import aldenjava.opticalmapping.data.OMWriter;
 import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
-import aldenjava.opticalmapping.visualizer.utils.VPartialMoleculeInfo;
 import joptsimple.OptionSet;
 
-public class CollinearBlockWriter extends OMWriter<CollinearBlock>{
-//	private String[] queries;
+public class CollinearBlockWriter extends OMWriter<CollinearBlock> {
 	
 	public CollinearBlockWriter(String filename) throws IOException {
 		super(filename, false);
-//		this.queries = queries;
 		initializeHeader();
 	}
 	public CollinearBlockWriter(OptionSet options) throws IOException {
 		this((String)options.valueOf("cblout"));
 	}
 
-//	@Override
-//	public void initializeHeader() throws IOException {
-//		for (String query : queries)
-//			bw.write("\t" + query);
-//		bw.write("\n");
-//	}
-	
 	@Override
 	public void write(CollinearBlock block) throws IOException {
 		bw.write(block.name);
@@ -66,20 +56,12 @@ public class CollinearBlockWriter extends OMWriter<CollinearBlock>{
 			if (!firstQuery)
 				bw.write(";");
 			firstQuery = false;
-			VPartialMoleculeInfo vpmi = block.groups.get(query);
+			BlockInfo vpmi = block.groups.get(query);
 			bw.write(query + ":" + vpmi.startSig + "-" + vpmi.stopSig + (vpmi.isReverse()?"R":"F"));			
 		}
 		bw.write("\n");
-			
-//		for (String query : queries) {
-//			bw.write("\t");
-//			if (block.groups.containsKey(query)) {
-//				VPartialMoleculeInfo vpmi = block.groups.get(query);
-//				bw.write(vpmi.startSig + "-" + vpmi.stopSig + (vpmi.isReverse()?"R":"F"));
-//			}
-//		}
-//		bw.write("\n");
 	}
+	
 	public static void writeAll(String filename, List<CollinearBlock> collinearBlocks) throws IOException {
 		CollinearBlockWriter cbw = new CollinearBlockWriter(filename);
 		cbw.writeAll(collinearBlocks);

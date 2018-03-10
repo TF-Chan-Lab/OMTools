@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -43,7 +43,7 @@ public class VTranslocation extends VSpace {
 	private GenomicPosNode region;
 
 	public VTranslocation(GenomicPosNode region, int direction) {
-		super(ViewSetting.SVObjectSize, 0);
+		super(ViewSetting.minSpaceSize, 0);
 		this.direction = direction;
 		this.region = region;
 		this.setToolTipText(String.format("%s: %s", this.getType(), region.toString()));
@@ -60,8 +60,8 @@ public class VTranslocation extends VSpace {
 		Graphics2D g = (Graphics2D) graphics;
 		g.setStroke(new BasicStroke((float) (ViewSetting.gapStrokeWidth * ratio)));
 		g.setPaint(ViewSetting.gapStrokeColor);
-		int lineWidth = (int) (ViewSetting.SVObjectSize * 2 / 5 / dnaRatio * ratio);
-		int recWidth = (int) (ViewSetting.SVObjectSize * 3 / 5 / dnaRatio * ratio);
+		int lineWidth = (int) (ViewSetting.minSpaceSize * 2 / 5 / dnaRatio * ratio);
+		int recWidth = (int) (ViewSetting.minSpaceSize * 3 / 5 / dnaRatio * ratio);
 		if (direction == 1) {
 			g.drawLine(0, this.getHeight() / 5 * 2, lineWidth, this.getHeight() / 5 * 2);
 			g.drawLine(0, this.getHeight() / 5 * 3, lineWidth, this.getHeight() / 5 * 3);

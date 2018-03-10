@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -68,15 +68,15 @@ public class OMBlastMapper extends Mapper {
 		super.setParameters(options);
 		this.setParameters((int) options.valueOf("seedingmode"), (boolean) options.valueOf("local"), (int) options.valueOf("falselimit"), (int) options.valueOf("k"),
 				(int) options.valueOf("maxnosignal"), (int) options.valueOf("meas"), (double) options.valueOf("ear"), (int) options.valueOf("match"), (int) options.valueOf("fpp"),
-				(int) options.valueOf("fnp"), (int) options.valueOf("maxseedno"), (boolean) options.valueOf("allowequalrefquery"));
+				(int) options.valueOf("fnp"), (int) options.valueOf("maxseedno"), (boolean) options.valueOf("allowequalrefquery"), (boolean) options.valueOf("allowdiffrefquery"));
 	}
 
 	public void setParameters(int seedingmode, boolean allowLocalAlignment, int falselimit, int kmerlen, int maxnosignalregion, int measure, double ear, int matchscore, int falseppenalty,
-			int falsenpenalty, int maxSeedNumber, boolean allowEqualRefQuery) {
+			int falsenpenalty, int maxSeedNumber, boolean allowEqualRefQuery, boolean allowDiffRefQuery) {
 		if (blastcore != null)
 			throw new IllegalStateException("Parameters are already initialized.");
 		blastcore = new OMBlastCore(optrefmap);
-		blastcore.setParameters(seedingmode, kmerlen, maxnosignalregion, allowLocalAlignment, measure, ear, matchscore, falseppenalty, falsenpenalty, falselimit, maxSeedNumber, allowEqualRefQuery);
+		blastcore.setParameters(seedingmode, kmerlen, maxnosignalregion, allowLocalAlignment, measure, ear, matchscore, falseppenalty, falsenpenalty, falselimit, maxSeedNumber, allowEqualRefQuery, allowDiffRefQuery);
 	}
 
 	@Override
@@ -102,7 +102,8 @@ public class OMBlastMapper extends Mapper {
 		Mapper.assignOptions(parser, level);
 		parser.addHeader("OMBlastMapper Options", level);
 		parser.accepts("local", "Enable local alignment").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
-		parser.accepts("allowequalrefquery", "Allow equal reference and query in alignment").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
+		parser.accepts("allowequalrefquery", "Allow equal reference and query in alignment. Disabling this options prohibits a query from aligning to itself as reference").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
+		parser.accepts("allowdiffrefquery", "Allow different reference and query in alignment. In contrast to allowequalrefquery, disabling this options prohibits a query from aligning to other queries as reference").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
 		AlignmentOptions.assignErrorToleranceOptions(parser);
 		AlignmentOptions.assignScoreOptions(parser);
 		parser.accepts("falselimit", "Maximum number of consecutive extra/missing signals").withRequiredArg().ofType(Integer.class).defaultsTo(5);

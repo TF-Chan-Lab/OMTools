@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -35,6 +35,23 @@ package aldenjava.opticalmapping.data.data;
  *
  */
 public class BnxDataNode extends DataNode {
+
+	// Requires overriding certain modification method in DataNode
+	
+	// BNX version 1.0
+	public double avgIntensity;
+	public double moleculeSNR;
+	public int originalMoleculeID;
+	public int scanNumber;
+	public int scanDirection;
+	public String chipID;
+	public int flowCell;
+	public boolean hasScanNumber;
+	
+	// BNX version 1.2
+	public int runID;
+	public int globalScanNumber;
+	public boolean hasGlobalScanNumber;
 	
 	public double[] snr; // equals to refp.length
 	public double[] intensity; // equals to refp.length
@@ -46,5 +63,44 @@ public class BnxDataNode extends DataNode {
 			throw new IllegalArgumentException("Array intensity must have the same length as refp");
 		this.snr = snr;
 		this.intensity = intensity;
+		
+		this.hasScanNumber = false;
+		this.hasGlobalScanNumber = false;
 	}
+	
+	public BnxDataNode(String name, long size, long[] refp, double[] snr, double[] intensity, double avgIntensity, double moleculeSNR, int originalMoleculeID, int scanNumber, int scanDirection, String chipID, int flowCell) {
+		super(name, size, refp);
+		this.avgIntensity = avgIntensity;
+		this.moleculeSNR = moleculeSNR;
+		this.originalMoleculeID = originalMoleculeID;
+		this.scanNumber = scanNumber;
+		this.scanDirection = scanDirection;
+		this.chipID = chipID;
+		this.flowCell = flowCell;
+		this.snr = snr;
+		this.intensity = intensity;
+		
+		this.hasScanNumber = true;
+		this.hasGlobalScanNumber = false;
+	}
+	
+	public BnxDataNode(String name, long size, long[] refp, double[] snr, double[] intensity, double avgIntensity, double moleculeSNR, int originalMoleculeID, int scanNumber, int scanDirection, String chipID, int flowCell, int runID,
+			int globalScanNumber) {
+		super(name, size, refp);
+		this.avgIntensity = avgIntensity;
+		this.moleculeSNR = moleculeSNR;
+		this.originalMoleculeID = originalMoleculeID;
+		this.scanNumber = scanNumber;
+		this.scanDirection = scanDirection;
+		this.chipID = chipID;
+		this.flowCell = flowCell;
+		this.runID = runID;
+		this.globalScanNumber = globalScanNumber;
+		this.snr = snr;
+		this.intensity = intensity;
+
+		this.hasScanNumber = true;
+		this.hasGlobalScanNumber = true;
+	}
+	
 }

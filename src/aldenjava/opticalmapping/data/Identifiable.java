@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,6 +29,9 @@
 
 package aldenjava.opticalmapping.data;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
 /**
  * An <code> Identifiable </code> is the identifier that can be used as a key of the object.
  * @author Alden
@@ -42,4 +45,11 @@ public interface Identifiable<K> {
 	 * @return	the identifier
 	 */
 	public K getIdentifier();
+	
+	public static <K, V extends Identifiable<K>> LinkedHashMap<K, V> convertToMap(List<V> list) {
+		LinkedHashMap<K, V> map = new LinkedHashMap<K, V>();
+		for (V v : list)
+			map.put(v.getIdentifier(), v);
+		return map;
+	}
 }

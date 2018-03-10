@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -30,6 +30,7 @@
 package aldenjava.sequence.fasta;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 
 import joptsimple.OptionSet;
@@ -40,6 +41,9 @@ public class StreamFastaReader extends OMReader<StreamFastaNode> {
 	
 	public StreamFastaReader(String filename) throws IOException {
 		super(filename);
+	}
+	public StreamFastaReader(InputStream stream) throws IOException {
+		super(stream);
 	}
 
 	public StreamFastaReader(OptionSet options) throws IOException {

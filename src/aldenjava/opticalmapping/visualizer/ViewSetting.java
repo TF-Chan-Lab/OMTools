@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -30,16 +30,16 @@
 package aldenjava.opticalmapping.visualizer;
 
 import java.awt.Color;
-import java.awt.Paint;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
+import aldenjava.common.ColorStringParser;
 import aldenjava.opticalmapping.miscellaneous.VerbosePrinter;
 
 /**
- * A class provides
+ * Stores all OMView settings
  * @author Alden
  *
  */
@@ -72,18 +72,24 @@ public class ViewSetting {
 	public static int bodyHeight = 10;
 	public static int moleculeSpace = 10;
 	public static int maMoleculeSpace = 10;
+	public static int mabMoleculeSpace = 200;
 	
 	// Query name setting
 	public static boolean displayQueryName = true;
 	public static Color queryNameColor = Color.BLACK;
 
 	// Gap setting
-	public static long SVObjectSize = 5000;
+	public static long minSpaceSize = 5000;
 	public static int gapStrokeWidth = 2;
 	public static Color gapStrokeColor = Color.BLACK;
 	
 	// Coverage and variability
+	public static boolean showCoverage = true;
 	public static int coverageHeight = 30;
+	public static boolean showCoverageAxis = true;
+	public static int coverageAxisUnit = 50;
+	public static Color coverageAxisColor = Color.GRAY;
+	public static int maxDisplayCoverage = -1;
 	public static int variabilityHeight = 20;
 	public static int maxVariableBlockTypes = 10;
 	
@@ -103,8 +109,10 @@ public class ViewSetting {
 	public static int alignmentLineLength = 40;
 	public static boolean alignmentViewModify = true;
 	public static boolean alignmentViewModifyScale = false;
-
+	public static boolean separateAlignmentDisplay = false;
+	
 	// Regional view setting
+	public static boolean useVariableColor = true;
 	public static int groupRefDistance = 2000000;
 	public static int groupFragDistance = 2000000;
 	
@@ -119,8 +127,15 @@ public class ViewSetting {
 	public static long annotationTextLength = 100000;
 	public static long annotationBlockHeight = 15;
 	
-	
-	
+	// Multiple alignment view setting
+	public static int hideBlockThreshold = 0;
+	public static boolean hideOverlapBlocks = false;
+	public static boolean useVariabilityColor = false;
+	public static boolean collapseSameGroupQuery = false;
+
+	// Multiple alignment block view setting
+	public static int blockConnectionLineWidth = 2;
+
 	// Coloring options
 	// Body Color options
 	public static Color moleculeColor = Color.GREEN;
@@ -148,11 +163,38 @@ public class ViewSetting {
 	public static Color variationColor2 = new Color(202, 51, 51);
 	public static Color maBGColor1 = new Color(236, 242, 254);
 	public static Color maBGColor2 = new Color(255, 255, 255);
+	
 
 	
 	
-	
-	
+	/*
+	public static boolean hasField(String setting) {
+		return Arrays.stream(ViewSetting.class.getFields()).map(Field::getName).anyMatch(setting::equals);
+	}
+	public static Object getValue(String setting) {
+		Field field;
+		Object value = null;
+		try {
+			field = ViewSetting.class.getDeclaredField(setting);
+			if (field.getType() == Color.class) {
+				value = ((Color) field.get(null)).getRGB();
+			}
+			else {
+				value = field.get(null);
+			}
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		
+		return value;
+	}
+	*/
 	public static void changeSetting(String setting, String value) {
 		if (setting == null || value == null)
 			return;
@@ -174,18 +216,7 @@ public class ViewSetting {
 							parsedValue = Boolean.parseBoolean(value);
 						else
 							if (field.getType() == Color.class) {
-								if (value.contains(",")) {
-									String[] l = value.split(",");
-									if (l.length == 4)
-										parsedValue = new Color(Integer.parseInt(l[0]),Integer.parseInt(l[1]),Integer.parseInt(l[2]),Integer.parseInt(l[3]));
-									else
-										if (l.length == 3)
-											parsedValue = new Color(Integer.parseInt(l[0]),Integer.parseInt(l[1]),Integer.parseInt(l[2]));
-										else
-											throw new IllegalArgumentException("Unknown color format.");
-								}
-								else
-									parsedValue = new Color(Integer.parseInt(value), true);
+								parsedValue = ColorStringParser.parseString(value);
 							}
 							else
 								if (field.getType() == String.class)
@@ -201,10 +232,8 @@ public class ViewSetting {
 			System.err.println("Field " + setting + " doesn't exist");
 		} catch (SecurityException e) {
 			System.err.println("Security execption while assessing fields");
-		} catch (NumberFormatException e) {
-			System.err.println("Incorrect number format on the field " + setting);
 		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
+			System.err.println("Incorrect format on the field " + setting);
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		} 
@@ -245,7 +274,7 @@ public class ViewSetting {
 					continue;
 				if (line.startsWith("#"))
 					continue;
-				String[] l = line.split("\t");
+				String[] l = line.split("\\s+");
 				String setting = l[0];
 				String value = l[1];
 				changeSetting(setting, value);

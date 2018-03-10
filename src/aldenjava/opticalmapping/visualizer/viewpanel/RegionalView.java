@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,8 +29,6 @@
 
 package aldenjava.opticalmapping.visualizer.viewpanel;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -48,7 +46,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
 import aldenjava.common.SimpleLongLocation;
+import aldenjava.common.WeightedRange;
 import aldenjava.opticalmapping.GenomicPosNode;
+import aldenjava.opticalmapping.data.data.DataCovNode;
 import aldenjava.opticalmapping.data.data.DataNode;
 import aldenjava.opticalmapping.data.mappingresult.OptMapResultNode;
 import aldenjava.opticalmapping.miscellaneous.InvalidVObjectException;
@@ -66,7 +66,7 @@ public class RegionalView extends ViewPanel {
 
 	private VReference vref = null;
 	private VRuler ruler;
-	private VCoverage vcov;
+	private VCoverage vcov = null;
 	private List<VMapMolecule> moleculelist = new ArrayList<VMapMolecule>();
 	private int lineNo = 0;
 	private MoleculeCreater moleCreater = null;
@@ -82,10 +82,6 @@ public class RegionalView extends ViewPanel {
 		ruler = new VRuler();
 		ruler.setVisible(true);
 		add(ruler);
-		
-//		vcov = new VCoverage();
-//		vcov.setVisible(true);
-//		add(vcov);
 		
 		this.autoSetSize();
 	}
@@ -109,6 +105,7 @@ public class RegionalView extends ViewPanel {
 		if (!(vref == null || ruler == null || moleculelist == null)) {
 			vref.setDNARatio(dnaRatio);
 			ruler.setDNARatio(dnaRatio);
+			vcov.setDNARatio(dnaRatio);
 			for (VMapMolecule molecule : moleculelist)
 				molecule.setDNARatio(dnaRatio);
 		}
@@ -119,6 +116,7 @@ public class RegionalView extends ViewPanel {
 		if (!(vref == null || ruler == null || moleculelist == null)) {
 			vref.setRatio(ratio);
 			ruler.setRatio(ratio);
+			vcov.setRatio(ratio);
 			for (VMapMolecule molecule : moleculelist)
 				molecule.setRatio(ratio);
 		}
@@ -130,14 +128,32 @@ public class RegionalView extends ViewPanel {
 			this.setSize(OMView.blankPanelSize);
 		else
 		{
-			int heightOfRulerAndRef = (int) (objBorder.y + ruler.getHeight() + (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio);
-			int height = (int) ((ViewSetting.moleculeSpace + ViewSetting.bodyHeight * (RegionalView.showUnmap?2:1)) * ratio);
-
-			if (vref == null)
-				height = mainView.getHeight();
-			else
-				height = (int) (objBorder.y * 2 + heightOfRulerAndRef + (lineNo * height));
-			setSize((int) (region.length() / dnaRatio  * ratio + objBorder.x * 2), height);
+			int y = objBorder.y;
+			if (ViewSetting.showCoverage) {
+				vcov.setLocation(objBorder.x, y);
+				y += vcov.getHeight();
+			}
+			
+			ruler.setLocation(objBorder.x, y);
+			y += ruler.getHeight();
+			
+			y += ViewSetting.moleculeSpace * ratio;
+			vref.setLocation(objBorder.x + (int) (vrefDisplace * ratio / dnaRatio), y);
+			y += vref.getHeight();
+			
+			y += ViewSetting.moleculeSpace * ratio;
+			
+			y += lineNo * (int) ((ViewSetting.moleculeSpace + ViewSetting.bodyHeight * (RegionalView.showUnmap?2:1)) * ratio);
+			
+			setSize((int) (region.length() / dnaRatio  * ratio + objBorder.x * 2), y);
+//			int heightOfRulerAndRef = (int) (objBorder.y + ruler.getHeight() + (ViewSetting.moleculeSpace + ViewSetting.bodyHeight) * ratio);
+//			int height = (int) ((ViewSetting.moleculeSpace + ViewSetting.bodyHeight * (RegionalView.showUnmap?2:1)) * ratio);
+//
+//			if (vref == null)
+//				height = mainView.getHeight();
+//			else
+//				height = (int) (objBorder.y * 2 + heightOfRulerAndRef + (lineNo * height));
+//			setSize((int) (region.length() / dnaRatio  * ratio + objBorder.x * 2), height);					
 		}
 		setPreferredSize(getSize());
 	}
@@ -146,30 +162,31 @@ public class RegionalView extends ViewPanel {
 	{	
 		if (region == null || vref == null)
 			return;
-		switch (sortingMethod)
-		{
+		int y = objBorder.y;
+		if (ViewSetting.showCoverage) {
+			vcov.setLocation(objBorder.x, y);
+			y += vcov.getHeight();
+		}
+		
+		ruler.setLocation(objBorder.x, y);
+		y += ruler.getHeight();
+		
+		y += ViewSetting.moleculeSpace * ratio;
+		vref.setLocation(objBorder.x + (int) (vrefDisplace * ratio / dnaRatio), y);
+		y += vref.getHeight();
+		
+		y += ViewSetting.moleculeSpace * ratio;
+		switch (sortingMethod) {
 			case 0: 
-				sortNormal(objBorder.x, objBorder.y + ruler.getHeight());
+				sortNormal(objBorder.x, y);
 				break;
 			default:;
 		}
-		ruler.setLocation(objBorder.x, objBorder.y);
-		
-		vref.setLocation(objBorder.x + (int) (vrefDisplace * ratio / dnaRatio), (int) (objBorder.y + ruler.getHeight() + ViewSetting.moleculeSpace * ratio));
-		int totalMolecules = 0;
-		int totalVisibleMolecules = 0;
-		for (VMapMolecule vmm : moleculelist)
-		{
-			totalMolecules++;
-			if (vmm.isVisible())
-				totalVisibleMolecules++;
-		}
-//		updateInfo(String.format("Region: %s\nMolecules Loaded: %d\nMolecule in Region: %d\nVisible Molecules: %d\n", region.toString(), mainView.dataModule.getResult(dataSelection.get(VDataType.ALIGNMENT)).size(), totalMolecules, totalVisibleMolecules)); 
-	}	
+	}
+	
 	private void sortNormal(int leftMargin, int topMargin) {
 		nameLocations = new LinkedHashMap<>();
 		List<Long> lineEndPos = new ArrayList<Long>();
-		int heightOfRulerAndRef = topMargin + (int) ((ViewSetting.moleculeSpace * 2 + ViewSetting.bodyHeight) * ratio);
 		int height = (int) ((ViewSetting.moleculeSpace + ViewSetting.bodyHeight * (RegionalView.showUnmap?2:1)) * ratio);
 		for (VMapMolecule vmm : moleculelist)
 		{
@@ -192,7 +209,7 @@ public class RegionalView extends ViewPanel {
 					y = (lineEndPos.size() - 1) * height;
 				}
 				
-				y += heightOfRulerAndRef;
+				y += topMargin;
 				vmm.setLocation(x, y);
 				vmm.autoSetSize();
 				vmm.reorganize();
@@ -255,12 +272,17 @@ public class RegionalView extends ViewPanel {
 		this.add(vref);
 		// change ruler
 		ruler.setStartEndPoint(region.getLoc());
-				
+		
+		// Use an empty coverage bar temporarily
+		this.clearCoverage();
+		vcov = new VCoverage();
+		vcov.setStartEndPoint(region.getLoc());
+		
 		// final ratio changes
 		setRatio(ratio);
 		setDNARatio(dnaRatio);
 
-		// Start to load molecules
+		// Start to load molecules and parse coverage
 		moleCreater = new MoleculeCreater(mainView.dataModule.getAllReference(), mainView.dataModule.getResult(dataSelection.get(VDataType.ALIGNMENT)), region, this);
 		moleCreater.addPropertyChangeListener(mainView.statusPanel);
 		moleCreater.execute();
@@ -278,7 +300,6 @@ public class RegionalView extends ViewPanel {
 		setDNARatio(dnaRatio);
 		moleCreater = null;
 	}
-	
 	private void clearMolecules() {
 		for (VMapMolecule vmm : moleculelist) {
 			this.remove(vmm);
@@ -286,6 +307,30 @@ public class RegionalView extends ViewPanel {
 		}
 		this.moleculelist = new ArrayList<VMapMolecule>();
 	}
+	
+	public void addCoverage(DataCovNode cov) {
+		this.clearCoverage();
+		List<WeightedRange<Long, Integer>> coverageRanges = new ArrayList<>();
+		for (int i = 0; i < cov.getTotalSegment(); i++) {
+			long min = i == 0 ? 1 : (cov.refp[i - 1] + 1);
+			long max = i == cov.getTotalSegment() - 1 ? cov.size : (cov.refp[i] - 1);
+			if (min <= max)
+				coverageRanges.add(new WeightedRange<Long, Integer>(min, max, cov.reflCount[i]));
+		}
+		vcov = new VCoverage(coverageRanges);
+		vcov.setStartEndPoint(region.getLoc());
+		vcov.setVisible(ViewSetting.showCoverage);
+		this.add(vcov);
+		this.reorganize();
+	}
+	
+	private void clearCoverage() {
+		if (vcov != null) {
+			this.remove(vcov);
+			vcov = null;
+		}
+	}
+	
 
 	// Listeners
 	@Override
@@ -405,7 +450,7 @@ public class RegionalView extends ViewPanel {
 		// Determine the font size
 		Font font; 
 		int fsize = 1;
-		int h = (int) (ViewSetting.maMoleculeSpace * ratio);
+		int h = (int) (ViewSetting.moleculeSpace * ratio);
 		while (true) {
 			font = new Font("Arial", Font.PLAIN, fsize + 1);
 			int testHeight = getFontMetrics(font).getHeight();
@@ -431,12 +476,14 @@ class MoleculeCreater extends SwingWorker<List<VMapMolecule>, Void> {
 	private LinkedHashMap<String, List<List<OptMapResultNode>>> resultlistlistmap;
 	private GenomicPosNode region;
 	private RegionalView viewPanel; // For registration of listener
+	private DataCovNode cov;
 	public MoleculeCreater(LinkedHashMap<String, DataNode> optrefmap, LinkedHashMap<String, List<List<OptMapResultNode>>> resultlistlistmap, GenomicPosNode region, RegionalView viewPanel)
 	{
 		this.optrefmap = optrefmap;
 		this.resultlistlistmap = resultlistlistmap;
 		this.region = region;
 		this.viewPanel = viewPanel;
+		this.cov = new DataCovNode(optrefmap.get(region.ref));
 	}
 	@Override
 	protected List<VMapMolecule> doInBackground() {
@@ -465,6 +512,8 @@ class MoleculeCreater extends SwingWorker<List<VMapMolecule>, Void> {
 			{
 				if (regionList.get(i).isClose(this.region, 0))
 				{
+					for (OptMapResultNode result : resultlistlist.get(i))
+						cov.update(result);
 					GenomicPosNode region1 = null;
 					GenomicPosNode region2 = null;
 					if (i != 0) 
@@ -501,8 +550,10 @@ class MoleculeCreater extends SwingWorker<List<VMapMolecule>, Void> {
 			}
 //		else
 //			JOptionPane.showMessageDialog(RegionalView.this, "Cancelled.");
-		if (moleculelist != null)
+		if (moleculelist != null) {
 			viewPanel.addMolecules(moleculelist);
+			viewPanel.addCoverage(cov);
+		}
 	}
 }
 

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,39 +29,81 @@
 
 package aldenjava.opticalmapping.multiplealignment;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import aldenjava.opticalmapping.data.Identifiable;
 import aldenjava.opticalmapping.data.data.DataNode;
-import aldenjava.opticalmapping.visualizer.utils.VPartialMoleculeInfo;
 
-public class CollinearBlock {
-	public String name;
-	public LinkedHashMap<String, VPartialMoleculeInfo> groups;
+public class CollinearBlock implements Identifiable<String> {
+	public final String name;
+	public final LinkedHashMap<String, BlockInfo> groups;
 	public CollinearBlock(String name) {
 		this.name = name;
 		this.groups = new LinkedHashMap<>();
 	}
 
-	public CollinearBlock(String name, LinkedHashMap<String, VPartialMoleculeInfo> groups) {
+	public CollinearBlock(String name, LinkedHashMap<String, BlockInfo> groups) {
 		this.name = name;
 		this.groups = groups;
 	}
 	
 	public void reverse() {
-		for (VPartialMoleculeInfo vpm : groups.values())
+		for (BlockInfo vpm : groups.values())
 			vpm.reverse();
 	}
 	
-	public static List<GroupingEntry> toGroupingEntries(List<CollinearBlock> collinearBlocks) {
+	public int getNumberOfSignals() {
+		if (groups.size() == 0)
+			return 0;
+		return groups.values().iterator().next().getNumberOfSignals();
+	}
+	
+	public List<Long> toSegments(Map<String, DataNode> dataMap) {
+		List<Long> segments = new ArrayList<>();
+		for (int round = 0; round < getNumberOfSignals() - 1; round++) {
+			long totalSize = 0;
+			for (String key : groups.keySet()) {
+				BlockInfo pmi = groups.get(key);
+				long s1;
+				long s2;
+				if (!pmi.isReverse()) {
+					s1 = dataMap.get(key).refp[pmi.startSig + round];
+					s2 = dataMap.get(key).refp[pmi.startSig + 1 + round];
+				}
+				else {
+					s1 = dataMap.get(key).refp[pmi.startSig - 1 - round];
+					s2 = dataMap.get(key).refp[pmi.startSig - round];	
+				}
+				totalSize += Math.abs(s2 - s1 - 1);
+			}
+			segments.add(totalSize / groups.size());
+		}
+		return segments;		
+	}
+	
+	@Override
+	public String getIdentifier() {
+		return name;
+	}
+
+
+	/**
+	 * Converts CollinearBlock to GroupingEntry
+	 * @param collinearBlocks Multiple alignment in List of CollinearBlock
+	 * @return Multiple alignment in List of GroupingEntry 
+	 */
+	public static List<GroupingEntry> toGroupingEntries(LinkedHashMap<String, CollinearBlock> collinearBlocks) {
 		List<GroupingEntry> entries = new ArrayList<>();
-		for (CollinearBlock block : collinearBlocks) {
+		for (CollinearBlock block : collinearBlocks.values()) {
 			List<LinkedHashMap<String, SingleGroup>> groupsList = new ArrayList<>();
 			for (String key : block.groups.keySet()) {
-				VPartialMoleculeInfo vpm = block.groups.get(key);
+				BlockInfo vpm = block.groups.get(key);
 				boolean reverse = vpm.isReverse();
 				int startSig = vpm.startSig;
 				int stopSig = vpm.stopSig;
@@ -81,6 +123,12 @@ public class CollinearBlock {
 		}
 		return entries;
 	}
+
+	/**
+	 * Converts GroupingEntry to CollinearBlock. Successive GroupingEntrys that share same queries are compressed into one CollinearBlock. 
+	 * @param collinearBlocks Multiple alignment in List of GroupingEntry
+	 * @return Multiple alignment in List of CollinearBlock 
+	 */
 	public static List<CollinearBlock> toCollinearBlocks(List<GroupingEntry> entries) {
 		List<CollinearBlock> collinearBlocks = new ArrayList<>();
 		// Reset the IDs for output group entries		
@@ -99,7 +147,7 @@ public class CollinearBlock {
 				}
 				else {
 					String name = "Block" + nextID++;
-					LinkedHashMap<String, VPartialMoleculeInfo> pmiMap = new LinkedHashMap<String, VPartialMoleculeInfo>();
+					LinkedHashMap<String, BlockInfo> pmiMap = new LinkedHashMap<String, BlockInfo>();
 					for (String key : outputFirstEntry.groups.keySet()) {
 						SingleGroup g1 = outputFirstEntry.groups.get(key);
 						SingleGroup g2 = outputLastEntry.groups.get(key);
@@ -109,7 +157,7 @@ public class CollinearBlock {
 						}
 						int startSig = outputFirstEntry.groups.get(key).segment + (g1.orientation == 1? -1 : 0);
 						int stopSig = outputLastEntry.groups.get(key).segment + (g2.orientation == 1? 0 : -1);
-						pmiMap.put(key, new VPartialMoleculeInfo(startSig, stopSig));
+						pmiMap.put(key, new BlockInfo(startSig, stopSig));
 					}
 					collinearBlocks.add(new CollinearBlock(name, pmiMap));
 					outputFirstEntry = entry;
@@ -120,7 +168,7 @@ public class CollinearBlock {
 		}
 		if (outputLastEntry != null) {
 			String name = "Block" + nextID++;
-			LinkedHashMap<String, VPartialMoleculeInfo> pmiMap = new LinkedHashMap<String, VPartialMoleculeInfo>();
+			LinkedHashMap<String, BlockInfo> pmiMap = new LinkedHashMap<String, BlockInfo>();
 			for (String key : outputFirstEntry.groups.keySet()) {
 				SingleGroup g1 = outputFirstEntry.groups.get(key);
 				SingleGroup g2 = outputLastEntry.groups.get(key);
@@ -130,19 +178,26 @@ public class CollinearBlock {
 				}
 				int startSig = outputFirstEntry.groups.get(key).segment + (g1.orientation == 1? -1 : 0);
 				int stopSig = outputLastEntry.groups.get(key).segment + (g2.orientation == 1? 0 : -1);
-				pmiMap.put(key, new VPartialMoleculeInfo(startSig, stopSig));
+				pmiMap.put(key, new BlockInfo(startSig, stopSig));
 			}
 			collinearBlocks.add(new CollinearBlock(name, pmiMap));
 		}
 		return collinearBlocks;
 	}
+
+	/**
+	 * Converts GroupingEntry to CollinearBlock. Successive GroupingEntrys that share same queries are not compressed. 
+	 * @param collinearBlocks Multiple alignment in List of GroupingEntry
+	 * @return Multiple alignment in List of CollinearBlock  
+	 */
 	public static List<CollinearBlock> toSingleSegmentCollinearBlocks(List<GroupingEntry> entries) {
 		List<CollinearBlock> collinearBlocks = new ArrayList<>();
 		// Reset the IDs for output group entries		
 		int nextID = 1;
 		for (GroupingEntry entry : entries) {
-			String name = entry.name;
-			LinkedHashMap<String, VPartialMoleculeInfo> pmiMap = new LinkedHashMap<String, VPartialMoleculeInfo>();
+//			String name = entry.name;
+			String name = "Block"+nextID++;
+			LinkedHashMap<String, BlockInfo> pmiMap = new LinkedHashMap<String, BlockInfo>();
 			for (String key : entry.groups.keySet()) {
 				SingleGroup g1 = entry.groups.get(key);
 				SingleGroup g2 = entry.groups.get(key);
@@ -152,14 +207,43 @@ public class CollinearBlock {
 				}
 				int startSig = entry.groups.get(key).segment + (g1.orientation == 1? -1 : 0);
 				int stopSig = entry.groups.get(key).segment + (g2.orientation == 1? 0 : -1);
-				pmiMap.put(key, new VPartialMoleculeInfo(startSig, stopSig));
+				pmiMap.put(key, new BlockInfo(startSig, stopSig));
 			}
 			collinearBlocks.add(new CollinearBlock(name, pmiMap));
 		}
 		return collinearBlocks;
 	}
 
-	public long getSize(LinkedHashMap<String, DataNode> dataMap) {
+	/**
+	 * Filters the multiple alignment results according to the queries. 
+	 * @param collinearBlocks
+	 * @param queries
+	 * @return filtered multiple alignment results
+	 */
+	public static LinkedHashMap<String, CollinearBlock> filter(LinkedHashMap<String, CollinearBlock> collinearBlocks, Set<String> queries) {
+		LinkedHashMap<String, CollinearBlock> newCollinearBlocks = new LinkedHashMap<>();
+		for (Entry<String, CollinearBlock> entry : collinearBlocks.entrySet())
+			if (!Collections.disjoint(queries, entry.getValue().groups.keySet())) {
+				String key = entry.getKey();
+				LinkedHashMap<String, BlockInfo> map = new LinkedHashMap<>();
+				for (String o : queries) 
+					if (entry.getValue().groups.containsKey(o))
+						map.put(o, entry.getValue().groups.get(o));
+				CollinearBlock block = new CollinearBlock(key, map);
+				newCollinearBlocks.put(key, block);
+			}
+
+		// Convert back to GroupingEntry to recompress
+		// newCollinearBlocks = Identifiable.convertToMap(toCollinearBlocks(toGroupingEntries(new ArrayList<>(newCollinearBlocks.values()))))
+
+		return newCollinearBlocks;
+	}
+	
+	
+	@Deprecated
+	public long getSize(Map<String, DataNode> dataMap) {
+		
+		// WRONG!
 		long totalSize = 0;
 		for (String key : groups.keySet()) {
 			long s1 = dataMap.get(key).refp[groups.get(key).startSig];

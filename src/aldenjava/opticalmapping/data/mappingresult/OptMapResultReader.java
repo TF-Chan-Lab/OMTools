@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -33,8 +33,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import joptsimple.OptionSet;
 import aldenjava.opticalmapping.Cigar;
@@ -54,8 +56,8 @@ public class OptMapResultReader extends OMReader<OptMapResultNode> {
 
 	private ResultFormat rformat;
 
-	private LinkedHashMap<String, DataNode> optrefmap = null;
-	private LinkedHashMap<String, DataNode> fragmentInfo = null;
+	private Map<String, DataNode> optrefmap = null;
+	private Map<String, DataNode> fragmentInfo = null;
 
 	public OptMapResultReader(OptionSet options) throws IOException {
 		this((String) options.valueOf("optresin"), (int) options.valueOf("optresinformat"));
@@ -91,7 +93,7 @@ public class OptMapResultReader extends OMReader<OptMapResultNode> {
 		this.optrefmap = optrefmap;
 	}
 
-	public void importFragInfo(LinkedHashMap<String, DataNode> fragmentInfo) {
+	public void importFragInfo(Map<String, DataNode> fragmentInfo) {
 		this.fragmentInfo = fragmentInfo;
 	}
 
@@ -165,7 +167,9 @@ public class OptMapResultReader extends OMReader<OptMapResultNode> {
 			if (f.getTotalSegment() != totalSegment) {
 				System.err.println("Warning: Inconsistent total segments and fragment details");
 			}
-
+			if (fragmentInfo == null)
+				fragmentInfo = new HashMap<>();
+			fragmentInfo.put(f.name, f);
 		}
 		else {
 			System.err.println("Warning: no available molecule info: " + id);
@@ -251,7 +255,14 @@ public class OptMapResultReader extends OMReader<OptMapResultNode> {
 
 		DataNode f = null;
 		if (!l[7].isEmpty()) {
-			f = new DataNode(id, DataNode.parseReflInString(l[7], ";"));
+			if (fragmentInfo != null && fragmentInfo.containsKey(id))
+				f = fragmentInfo.get(id);
+			else {
+				f = new DataNode(id, DataNode.parseReflInString(l[7], ";"));
+				if (fragmentInfo == null)
+					fragmentInfo = new HashMap<>();
+				fragmentInfo.put(f.name, f);
+			}
 			if (SimulationInfo.checkInfoValid(fromref, genomestart, genomestop, strand))
 				f.importSimulationInfo(new SimulationInfo(new GenomicPosNode(fromref, genomestart, genomestop), strand));
 		} else if (fragmentInfo != null) {
@@ -939,8 +950,12 @@ public class OptMapResultReader extends OMReader<OptMapResultNode> {
 	public LinkedHashMap<String, List<OptMapResultNode>> readAllDataInList() throws IOException {
 		LinkedHashMap<String, List<OptMapResultNode>> resultlistmap = new LinkedHashMap<String, List<OptMapResultNode>>();
 		List<OptMapResultNode> resultlist;
-		while ((resultlist = readNextList()) != null)
-			resultlistmap.put(resultlist.get(0).parentFrag.name, resultlist);
+		while ((resultlist = readNextList()) != null) {
+			String name = resultlist.get(0).parentFrag.name;
+			if (resultlistmap.containsKey(name))
+				System.err.println("Warning: more than one set of alignments are named as \"" + name + "\". Please make sure (1) two data entires should not have the same name, and (2) alignment result should be sorted by name.");
+			resultlistmap.put(name, resultlist);
+		}
 		return resultlistmap;
 	}
 

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -33,9 +33,11 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 
 import aldenjava.common.SimpleLongLocation;
+import aldenjava.common.UnweightedRange;
 import aldenjava.common.WeightedRange;
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 
@@ -44,6 +46,9 @@ public class VVariability extends VObject {
 	private SimpleLongLocation startEndPoint;
 	private List<WeightedRange<Long, Double>> variabilityRanges;
 	
+	public VVariability() {
+		this(new ArrayList<>());
+	}
 	public VVariability(List<WeightedRange<Long, Double>> variabilityRanges) {
 		this.variabilityRanges = variabilityRanges;
 	}
@@ -85,6 +90,7 @@ public class VVariability extends VObject {
 		for (WeightedRange<Long, Double> range : variabilityRanges) {
 			double colorRatio = (range.weight - 1) / max;
 //			double colorRatio = range.weight / max;
+			
 			if (colorRatio > 1)
 				colorRatio = 1;
 			int red = (int) Math.abs((colorRatio * ViewSetting.variationColor2.getRed()) + ((1 - colorRatio) * ViewSetting.variationColor1.getRed()));
@@ -98,4 +104,19 @@ public class VVariability extends VObject {
 		
 	}
 
+	public double getAverageVariability(UnweightedRange<Long> targetRange) {
+		double totalVariability = 0;
+		double max = 0;
+
+		for (WeightedRange<Long, Double> range : variabilityRanges)
+			if (max < range.weight)
+				max = range.weight;
+//		max = 68;
+//		max 
+		for (WeightedRange<Long, Double> range : variabilityRanges)
+			if (range.overlap(targetRange))
+				totalVariability += range.overlapSize(targetRange) / (double) targetRange.length() * range.weight;
+		
+		return totalVariability / max;
+	}
 }

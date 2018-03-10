@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,14 +29,20 @@
 
 package aldenjava.opticalmapping.data;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.Closeable;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
+
+import org.apache.commons.io.FilenameUtils;
 /**
  * Abstract class for reading data of any type from a file or input stream using a buffered reader. The only method that a subclass must implement is read(). Subclasses can override commentReader() and proceedNextLine() based on the file format 
  * 
@@ -59,7 +65,7 @@ public abstract class OMReader<T> implements Closeable {
 	 * @throws IOException
 	 */
 	public OMReader(String filename) throws IOException {
-		br = new BufferedReader(new FileReader(filename));
+		br = new BufferedReader(new InputStreamReader(OMReader.getFileStream(filename)));
 		commentReader();
 	}
 	/**
@@ -109,28 +115,51 @@ public abstract class OMReader<T> implements Closeable {
 			tList.add(t);
 		return tList;
 	}
-//	public HashSet<String> readAllIdentifier() throws IOException
-//	{
-//		HashSet<String> identifiers = new HashSet<String>();
-//		T t;
-//		while ((t = read()) != null)
-//		{
-//			if (!(t instanceof Identifiable))
-//				throw new UnsupportedOperationException();
-//			identifiers.add(((Identifiable) t).getIdentifier());
-//		}
-//		return identifiers;
-//		
-//	}	
+
+	/**
+	 * Attempts to read for all data and output according to the collector.   
+	 * @return	the collected elements
+	 * @throws IOException	if an I/O error occurs
+	 */
+	public <R> R readAll(Collector<T,?,R> collector) throws IOException {
+		return getStream().collect(collector);		
+	}
+	
+	/**
+	 * Returns a <code>Stream</code> of the elements    
+	 * @return a {@code Stream<T>} 
+	 * @throws IOException	if an I/O error occurs
+	 */
+	public Stream<T> getStream() throws IOException {
+		Stream.Builder<T> builder = Stream.builder();
+		T t;
+		while ((t = read()) != null)
+			builder.accept(t);
+		return builder.build();
+	}
+	
 	@Override
 	public void close() throws IOException {
 		br.close();
 	}
 
+	/**
+	 * Returns a {@code FileInputStream} for non-compressed file, or an {@code InflaterInputStream} if the file is in supported compression format, defined in {@code CompressionFormat}
+	 * @param filename
+	 * @return an {@code InputStream} 
+	 * @throws IOException
+	 */
+	public static InputStream getFileStream(String filename) throws IOException {
+		InputStream stream = new BufferedInputStream(new FileInputStream(filename));
+		String extension = FilenameUtils.getExtension(filename);
+		if (CompressionFormat.isValidFormat(extension)) {
+			CompressionFormat cformat = CompressionFormat.lookupfileext(extension);
+			switch (cformat) {
+				case GZIP:
+					stream = new GZIPInputStream(stream);
+					break;
+			}
+		}
+		return stream;
+	}
 }
-
-
-//interface Identifiable
-//{
-//	public String getIdentifier();
-//}

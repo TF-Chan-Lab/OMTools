@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -35,7 +35,6 @@ import java.util.Arrays;
 
 import org.apache.commons.lang.StringUtils;
 
-import aldenjava.opticalmapping.application.svdetection.SVDetection;
 import aldenjava.opticalmapping.data.OMWriter;
 import aldenjava.opticalmapping.data.data.OptMapDataGenerator;
 import aldenjava.opticalmapping.data.data.RandomReferenceGenerator;
@@ -44,17 +43,31 @@ import aldenjava.opticalmapping.mapper.PairwiseAlignment;
 import aldenjava.opticalmapping.mapper.omblastmapper.OMBlastMapper;
 import aldenjava.opticalmapping.mapper.omfmmapper.OMFMMapper;
 import aldenjava.opticalmapping.mapper.omhamapper.OMHAMapper;
+import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
+import aldenjava.opticalmapping.miscellaneous.RandomSeed;
 import aldenjava.opticalmapping.miscellaneous.VerbosePrinter;
+import aldenjava.opticalmapping.multiplealignment.BlockConnectionGraphGeneration;
+import aldenjava.opticalmapping.multiplealignment.MultipleAlignment;
+import aldenjava.opticalmapping.multiplealignment.MultipleAlignmentPerformanceAnalysis;
+import aldenjava.opticalmapping.phylogenetic.UPGMATreeConstruction;
+import aldenjava.opticalmapping.statistics.DataQualityCheck;
 import aldenjava.opticalmapping.statistics.DataStatistics;
 import aldenjava.opticalmapping.statistics.ResultStatistics;
+import aldenjava.opticalmapping.svdetection.SVDetection;
+import aldenjava.opticalmapping.tools.AlignmentHighlight;
+import aldenjava.opticalmapping.tools.CBLTools;
 import aldenjava.opticalmapping.tools.DataTools;
 import aldenjava.opticalmapping.tools.DuplicatedMoleculesDetection;
 import aldenjava.opticalmapping.tools.DuplicatedMoleculesRemover;
 import aldenjava.opticalmapping.tools.FastaToOM;
+import aldenjava.opticalmapping.tools.QueryReverse;
 import aldenjava.opticalmapping.tools.ResultMerger;
 import aldenjava.opticalmapping.tools.ResultTools;
 import aldenjava.opticalmapping.visualizer.OMView;
+import aldenjava.script.FrequentKmerHighlight;
 import aldenjava.script.PrecisionRecallGraphDataGenerator;
+import aldenjava.script.SeparateBNXScan;
+import aldenjava.script.TWINResultRepeatRemover;
 
 /**
  * This class is the user interface of all different tools.
@@ -63,10 +76,11 @@ import aldenjava.script.PrecisionRecallGraphDataGenerator;
  */
 public class OMTools {
 
-	public final static String version = "OMTools Version 1.3a";
+	public final static String version = "OMTools Version 1.4";
 	public final static String author = "Alden Leung";
 	
-	private static void displayOptions() throws IOException, MapperConstructionException {		
+	private static void displayOptions() throws IOException, MapperConstructionException {
+		ExtendOptionParser.manualGeneration = true;
 		String[] arg = new String[]{};
 		System.out.println("\\part{Mapper}");
 		OMBlastMapper.main(arg);
@@ -82,18 +96,35 @@ public class OMTools {
 		FastaToOM.main(arg);
 		System.out.println("\\part{Data Tools}");
 		DataTools.main(arg);
+		DataQualityCheck.main(arg);
 		DataStatistics.main(arg);
 		DuplicatedMoleculesDetection.main(arg);
 		DuplicatedMoleculesRemover.main(arg);
+		FrequentKmerHighlight.main(arg);
 		System.out.println("\\part{Alignment Tools}");
 		ResultTools.main(arg);
 		ResultMerger.main(arg);
 		ResultStatistics.main(arg);
 		PrecisionRecallGraphDataGenerator.main(arg);
+		QueryReverse.main(arg);
+		AlignmentHighlight.main(arg);
+		System.out.println("\\part{Multiple Alignment}");
+		MultipleAlignment.main(arg);		
+		System.out.println("\\input{maproc}");
+		System.out.println("\\part{Multiple Alignment Tools}");
+		CBLTools.main(arg);
+		MultipleAlignmentPerformanceAnalysis.main(arg);
+		BlockConnectionGraphGeneration.main(arg);
+		System.out.println("\\part{Phylogenetics}");
+		UPGMATreeConstruction.main(arg);
 		System.out.println("\\part{Visualization}");
 		OMView.main(new String[] {"--help"});
 		System.out.println("\\input{omview}");
+		System.out.println("\\part{Other Scripts}");
+		TWINResultRepeatRemover.main(arg);
+		SeparateBNXScan.main(arg);
 		System.exit(0);
+
 	}
 	public static void main(String[] args) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, IOException, MapperConstructionException
 	{
@@ -120,19 +151,31 @@ public class OMTools {
 			System.out.println("FastaToOM");
 			System.out.println("============== Data Tools ===============");
 			System.out.println("DataTools");
+			System.out.println("DataQualityCheck");
 			System.out.println("DataStatistics");
 			System.out.println("DuplicatedMoleculesDetection");
 			System.out.println("DuplicatedMoleculesRemover");
+			System.out.println("FrequentKmerHighlight");
 			System.out.println("============= Alignment Tools ==============");
 			System.out.println("ResultTools");
 			System.out.println("ResultMerger");
 			System.out.println("ResultStatistics");
 			System.out.println("PrecisionRecallGraphDataGenerator");
+			System.out.println("QueryReverse");
+			System.out.println("AlignmentHighlight");
 			System.out.println("============= Multiple Alignment ==============");
 			System.out.println("MultipleAlignment");
+			System.out.println("============= Multiple Alignment Tools ==============");
+			System.out.println("CBLTools");			
+			System.out.println("MultipleAlignmentPerformanceAnalysis");
 			System.out.println("BlockConnectionGraphGeneration");
+			System.out.println("============= Phylogenetics ==============");
+			System.out.println("UPGMATreeConstruction");
 			System.out.println("=============== Visualization ================");
 			System.out.println("OMView");
+			System.out.println("=============== Other Scripts ================");
+			System.out.println("TWINResultRepeatRemover");
+			System.out.println("SeparateBNXScan");
 		}
 		else {
 			String option;
@@ -142,12 +185,24 @@ public class OMTools {
 					case "-verbose": 
 						VerbosePrinter.verbose = true;
 						break;
+					case "-noverbose": 
+						VerbosePrinter.verbose = false;
+						break;
 					case "-verberr":
 						VerbosePrinter.verbose = true;
 						VerbosePrinter.stream = System.err;
 						break;
 					case "-disableheader":
 						OMWriter.setHeader(false);
+						break;
+					case "-randseed":
+						pos++;
+						if (args.length <= pos) {
+							System.err.println("Enter a value for randseed!");
+							return;
+						}
+						long defaultSeed = Long.parseLong(args[pos]);
+						RandomSeed.setDefaultSeed(defaultSeed);
 						break;
 					case "-version":
 						System.out.println(OMTools.version);
@@ -174,13 +229,11 @@ public class OMTools {
 				case "pairwisealignment":
 					PairwiseAlignment.main(arg);
 					break;
+				// Clustering
+					
 				// SVDetection
 				case "svdetection":
 					SVDetection.main(arg);
-					break;
-				// Visualizer
-				case "omview":
-					OMView.main(arg);
 					break;
 					
 				// Simulation
@@ -198,6 +251,9 @@ public class OMTools {
 				case "datatools":
 					DataTools.main(arg);
 					break;
+				case "dataqualitycheck":
+					DataQualityCheck.main(arg);
+					break;
 				case "datastatistics":
 					DataStatistics.main(arg);
 					break;
@@ -207,7 +263,10 @@ public class OMTools {
 				case "duplicatedmoleculesremover":
 					DuplicatedMoleculesRemover.main(arg);
 					break;
-				// Result
+				case "frequentkmerhighlight":
+					FrequentKmerHighlight.main(arg);
+					break;
+				// Alignment tools
 				case "resulttools":
 					ResultTools.main(arg);
 					break;
@@ -219,6 +278,44 @@ public class OMTools {
 					break;
 				case "precisionrecallgraphdatagenerator":	
 					PrecisionRecallGraphDataGenerator.main(arg);
+					break;
+				case "queryreverse":
+				case "contigreverse": // Old name, used here as alias
+					QueryReverse.main(arg);
+					break;
+				case "alignmenthighlight":
+					AlignmentHighlight.main(arg);
+					break;
+				// Multiple alignment
+				case "multiplealignment":
+					MultipleAlignment.main(arg);
+					break;
+				// Multiple alignment tools
+				case "cbltools":
+					CBLTools.main(arg);
+					break;
+				case "multiplealignmentperformanceanalysis":
+					MultipleAlignmentPerformanceAnalysis.main(arg);
+					break;
+				case "blockconnectiongraphgeneration":
+					BlockConnectionGraphGeneration.main(arg);
+					break;
+					
+				// Phylogenetics
+				case "upgmatreeconstruction":
+					UPGMATreeConstruction.main(arg);
+					break;
+				// Visualizer
+				case "omview":
+					OMView.main(arg);
+					break;
+
+				// Other scripts
+				case "twinresultrepeatremover":
+					TWINResultRepeatRemover.main(arg);
+					break;
+				case "separatebnxscan":
+					SeparateBNXScan.main(arg);
 					break;
 				default:
 					System.err.println("No such program found: \"" + programname + "\".");

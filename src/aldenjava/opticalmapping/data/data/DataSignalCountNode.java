@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -55,12 +55,44 @@ public class DataSignalCountNode extends DataNode {
 	}
 	
 	
+	public void update(OptMapResultNode result, int flankSig) {
+		// This is not applied yet. Should be used in a more general way
+		if (!result.mappedRegion.ref.equals(super.name))
+			throw new IllegalArgumentException("Mismatch in update of aligned reference coverage");
+		int limit1 = flankSig;
+		int matchSigPos = 0;
+		int limit2 = result.getMatch() - flankSig + 1;
+		String precigar = result.cigar.getPrecigar();
+		int currentrefpos = result.subrefstart;
+		for (char c : precigar.toCharArray()) {
+			switch (c) {
+				case 'M':
+					matchSigPos++;
+					if (matchSigPos > limit1 && matchSigPos < limit2) {
+						this.refpSigMatchCount[currentrefpos - 1]++;
+						this.refpCount[currentrefpos - 1]++;
+						this.refpevidencelist.get(currentrefpos - 1).add(result);
+					}
+					currentrefpos += 1;
+					break;
+				case 'D':
+					if (matchSigPos > limit1 && matchSigPos < limit2) {
+						this.refpCount[currentrefpos - 1]++;
+						this.refpevidencelist.get(currentrefpos - 1).add(result);
+					}
+					currentrefpos += 1;
+					break;
+				default:
+					;
+			}
+		}
+	}
 	public static LinkedHashMap<String, DataSignalCountNode> initialize(LinkedHashMap<String, DataNode> optrefmap) {
 		LinkedHashMap<String, DataSignalCountNode> optrefsigmap = new LinkedHashMap<String, DataSignalCountNode>();
 		for (DataNode ref : optrefmap.values())
 			optrefsigmap.put(ref.name, new DataSignalCountNode(ref));
 		return optrefsigmap;
 	}
-
+	
 
 }

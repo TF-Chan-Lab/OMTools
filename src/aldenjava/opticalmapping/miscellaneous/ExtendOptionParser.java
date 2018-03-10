@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -53,6 +53,7 @@ import joptsimple.OptionSpecBuilder;
  */
 public class ExtendOptionParser extends OptionParser {
 
+	public static boolean manualGeneration = false;
 	private List<String> header;
 	private List<Integer> level;
 	private List<OptionParser> subParser;
@@ -137,6 +138,10 @@ public class ExtendOptionParser extends OptionParser {
 	
 	@Override
 	public void printHelpOn(OutputStream sink) {
+		if (manualGeneration) {
+			printHelpOnManualGeneration(sink);
+			return;
+		}
 		int paragraphLength = 75;
 		try {
 			NullHelpFormatter nhf = new NullHelpFormatter();
@@ -195,10 +200,7 @@ public class ExtendOptionParser extends OptionParser {
 	}
 	
 	// This method is used to generate part of the software manual
-	/*
-	@Override
-	public void printHelpOn(OutputStream sink) {
-		int paragraphLength = 1000;
+	public void printHelpOnManualGeneration(OutputStream sink) {
 		try {
 			NullHelpFormatter nhf = new NullHelpFormatter();
 			super.formatHelpWith(nhf);
@@ -243,7 +245,7 @@ public class ExtendOptionParser extends OptionParser {
 			e.printStackTrace();
 		}
 	}
-	*/
+	
 	@Override
 	public OptionSet parse(String... arguments) {
 		// To assign the non-option values to the last occurring option by adding extra option

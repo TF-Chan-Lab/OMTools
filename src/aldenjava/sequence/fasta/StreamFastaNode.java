@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -87,6 +87,11 @@ public class StreamFastaNode {
 	public StreamFastaNode subSeq(long start, long stop) {
 		if (start > Integer.MAX_VALUE || stop > Integer.MAX_VALUE)
 			throw new UnsupportedOperationException("Genomic region of long is not supported for subSeq");
+		if (start > stop) {
+			long tmp = stop;
+			stop = start;
+			start = tmp;
+		}
 		return new StreamFastaNode(name + "_" + start + "_" + stop, seq.substring((int) start - 1, (int) stop));
 	}
 }

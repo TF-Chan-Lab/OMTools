@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -91,20 +91,27 @@ public class OptMapResultWriter extends OMWriter<OptMapResultNode> {
 
 	@Override
 	protected void initializeHeader() throws IOException {
-		super.initializeHeader();
+		
 		if (rformat != null)
 			switch (rformat) {
 				case OMA:
+					super.initializeHeader();
 					bw.write("#OMA File format version v1.1\n");
 					bw.write("#QueryID\tQuerySeg\tQuerySegInfo\tRefID\tStrand\tScore\tConfidence\tRefSegStart\tRefSegStop\tQuerySegStart\tQuerySegStop\tRefStartCoord\tRefStopCoord\tCigar\n");
 					break;
 				case OMD:
+					super.initializeHeader();
 					bw.write("#QueryID\tsimuRefID\tsimuStrand\tsimuStart\tsimuStop\tQuerySize\tQuerySeg\tQuerySegInfo\tRefID\tRefStartCoord\tRefStopCoord\tStrand\tRefSegStart\tRefSegStop\tQuerySegStart\tQuerySegStop\tAlignedSegRatio\tScore\tCigar\tConfidence\tFP\tFN\tScale\tFPRate\tFNRate\tsimuCorrectlyMapped\n");
 					break;
 				case XMAP:
-					bw.write("# XMAP File Version:\t0.1\n");
-					bw.write("#h XmapEntryID\tQryContigID\tRefcontigID\tQryStartPos\tQryEndPos\tRefStartPos\tRefEndPos\tOrientation\tConfidence\tHitEnum\n");
-					bw.write("#f int\tstring\tstring\tfloat\tfloat\tfloat\tfloat\tstring\tfloat\tstring\n");
+					bw.write("# FLAGS: USE_SSE=1 USE_AVX=1 USE_MIC=0 USE_PFLOAT=1 USE_RFLOAT=1 USE_MFLOAT=1 USE_EPOW=1 DEBUG=1 VERB=1\n");
+					bw.write("# XMAP File Version:\t0.2\n");
+					super.initializeHeader();
+					bw.write("# Label Channels:\t1\n");
+					bw.write("# Reference Maps From:\t\n");
+					bw.write("# Query Maps From:\t\n");
+					bw.write("#h XmapEntryID\tQryContigID\tRefcontigID\tQryStartPos\tQryEndPos\tRefStartPos\tRefEndPos\tOrientation\tConfidence\tHitEnum\tQryLen\tRefLen\tLabelChannel\tAlignment\n");
+					bw.write("#f int\tstring\tstring\tfloat\tfloat\tfloat\tfloat\tstring\tfloat\tstring\tfloat\tfloat\tint\tstring\n");
 					xmapDummyID = 0;
 					break;
 				case VAL:
@@ -197,9 +204,14 @@ public class OptMapResultWriter extends OMWriter<OptMapResultNode> {
 	private void writeXMAP(OptMapResultNode result) throws IOException {
 		xmapDummyID++;
 		DataNode f = result.parentFrag;
-		bw.write(String.format("%s\t%s\t%s\t%d.0\t%d.0\t%d.0\t%d.0\t%s\t%.2f\t%s\n", Integer.toString(xmapDummyID), f.name, result.mappedRegion.ref, result.parentFrag.refp[result.subfragstart
+		int[] rm = result.getRefMapSignal();
+		int[] qm = result.getMapSignal();
+		String alignmentString = "";
+		for (int i = 0; i < rm.length; i++)
+			alignmentString += "(" + (rm[i] + 1) + "," + (qm[i] + 1) + ")";
+		bw.write(String.format("%s\t%s\t%s\t%d.0\t%d.0\t%d.0\t%d.0\t%s\t%.2f\t%s\t%d.0\t1.0\t1\t%s\n", Integer.toString(xmapDummyID), f.name, result.mappedRegion.ref, result.parentFrag.refp[result.subfragstart
 				- (result.mappedstrand == 1 ? 1 : 0)], result.parentFrag.refp[result.subfragstop - (result.mappedstrand == 1 ? 0 : 1)], result.mappedRegion.start, result.mappedRegion.stop,
-				result.mappedstrand == 1 ? "+" : result.mappedstrand == -1 ? "-" : "", result.mappedscore, result.cigar));
+				result.mappedstrand == 1 ? "+" : result.mappedstrand == -1 ? "-" : "", result.mappedscore, result.cigar, result.parentFrag.length(), alignmentString));
 	}
 	public static void assignOptions(ExtendOptionParser parser, int level) {
 		parser.addHeader("Result Writer Options", 1);

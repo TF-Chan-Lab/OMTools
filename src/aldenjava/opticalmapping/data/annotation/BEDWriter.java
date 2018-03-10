@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,99 +29,80 @@
 
 package aldenjava.opticalmapping.data.annotation;
 
-import java.awt.Color;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-import joptsimple.OptionSet;
+import aldenjava.opticalmapping.data.OMWriter;
 import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
+import joptsimple.OptionSet;
 
-
-
-public class BEDWriter {
+public class BEDWriter extends OMWriter<BEDNode> {
 
 	/**
-	 * Data Writer
+	 * BED Writer
+	 * 
 	 * @author Alden
 	 *
 	 */
 
-		private BufferedWriter bw;
-		public BEDWriter(String filename) throws IOException
-		{
-			bw = new BufferedWriter(new FileWriter(filename));
-			this.initializeHeader();
-		}
-		public BEDWriter(OptionSet options) throws IOException
-		{
-			this((String) options.valueOf("bedout"));
-		}
+	public BEDWriter(String filename) throws IOException {
+		super(filename);
+	}
 
-		public void initializeHeader() throws IOException
-		{
-		}
+	public BEDWriter(OptionSet options) throws IOException {
+		this((String) options.valueOf("bedout"));
+	}
 
-		public void close() throws IOException
-		{
-			bw.close();
-		}
-		
-		public void write(BEDNode bed) throws IOException
-		{
-//			public Long thickStart;
-//			public Long thickEnd;
-//			public Color itemRgb;
-//			public Integer blockCount;
-//			public List<Long> blockSizes;
-//			public List<Long> blockStarts;
+	@Override
+	public void initializeHeader() throws IOException {
+	}
 
-			bw.write(bed.chrom);
-			bw.write("\t");
-			bw.write(Long.toString(bed.chromStart));
-			bw.write("\t");
-			bw.write(Long.toString(bed.chromEnd));
+	@Override
+	public void write(BEDNode bed) throws IOException {
+		bw.write(bed.chrom);
+		bw.write("\t");
+		bw.write(Long.toString(bed.chromStart));
+		bw.write("\t");
+		bw.write(Long.toString(bed.chromEnd));
 
-			bw.write("\t");
-			if (bed.name != null)
-				bw.write(bed.name);
-			bw.write("\t");
-			if (bed.score != null)
-				bw.write(Integer.toString(bed.score));
-			bw.write("\t");
-			if (bed.strand != null)
-				bw.write(bed.strand);
-			bw.write("\t");
-			if (bed.thickStart != null)
-				bw.write(Long.toString(bed.thickStart));
-			bw.write("\t");
-			if (bed.thickEnd != null)
-				bw.write(Long.toString(bed.thickEnd));
-			bw.write("\t");
-			if (bed.itemRgb != null)
-				bw.write(bed.itemRgb.getRed() + "," + bed.itemRgb.getGreen() + "," + bed.itemRgb.getBlue());
-			bw.write("\t");
-			if (bed.blockCount != null)
-				bw.write(Integer.toString(bed.blockCount));
-			bw.write("\t");
-			if (bed.blockSizes != null)
-				;
-			if (bed.blockStarts != null)
-				;
-			bw.write("\n");
-		}
+		bw.write("\t");
+		if (bed.name != null)
+			bw.write(bed.name);
+		bw.write("\t");
+		if (bed.score != null)
+			bw.write(Integer.toString(bed.score));
+		bw.write("\t");
+		if (bed.strand != null)
+			bw.write(bed.strand);
+		bw.write("\t");
+		if (bed.thickStart != null)
+			bw.write(Long.toString(bed.thickStart));
+		bw.write("\t");
+		if (bed.thickEnd != null)
+			bw.write(Long.toString(bed.thickEnd));
+		bw.write("\t");
+		if (bed.itemRgb != null)
+			bw.write(bed.itemRgb.getRed() + "," + bed.itemRgb.getGreen() + "," + bed.itemRgb.getBlue());
+		bw.write("\t");
+		if (bed.blockCount != null)
+			bw.write(Integer.toString(bed.blockCount));
+		bw.write("\t");
+		if (bed.blockSizes != null)
+			;
+		if (bed.blockStarts != null)
+			;
+		bw.write("\n");
+		// Block sizes and starts are not supported yet
+	}
 
-		public void writeAll(List<BEDNode> bedList) throws IOException
-		{
-			for (BEDNode bed : bedList)
-				write(bed);
-		}	
+	public void writeAll(List<BEDNode> bedList) throws IOException {
+		for (BEDNode bed : bedList)
+			write(bed);
+	}
 
-		public static void assignOptions(ExtendOptionParser parser)
-		{
-			parser.addHeader("BED Writer Options", 1);
-			parser.accepts("bedout", "BED output file").withOptionalArg().ofType(String.class).defaultsTo("");
-		}
+	public static void assignOptions(ExtendOptionParser parser, int level) {
+		parser.addHeader("BED Writer Options", level);
+		parser.accepts("bedout", "Output BED file").withRequiredArg().ofType(String.class);
+	}
 
 }

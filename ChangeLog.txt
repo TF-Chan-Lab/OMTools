@@ -1,3 +1,168 @@
+Version 1.4
+Modified classes:
+UnweightedRange
+- Fixed bug in canStitch and stitchUnweightedRange methods
+- length method now returns max-min+1 instead of max-min
+WeightedRange
+- Fixed bug in stitchWeightedRange method
+- Added toString method
+GenomicPosNode
+- Added overlap method
+- Added contains method
+- Use Regex for string parsing
+OMTools
+- Added support to ExtendOptionParser.manualGeneration
+- Added noverbose and randseed parameters
+KmerCluster
+- Rewrite to support strand-sensitive clustering
+DataFormat
+- Added support to compressed file
+Identifiable
+- Added convertToMap method
+OMReader
+- Added support to compressed file
+- Added methods: readAll, getStream, getFileStream
+OMWriter
+- Added support to compressed file
+- Modified writeAll methods to accept more general parameters
+AnnotationNode
+- Added methods: getRegion, setRegion
+BEDNode
+- Added constructor
+BEDReader
+- Added assignOptions
+BEDWriter
+- Rewriter to extend from OMWriter
+GFFNode
+- Added constructor
+- Added setRegion
+GFFWriter
+- Fixed bug in writing GFFNode with non-null score but null frame
+BnxDataNode
+- Added support to bnx version 1.2
+DataNode
+- Added hashCode and equals
+- Remove getErrorKmerWord method
+DataSignalCountNode
+- Added an incomplete method for future use
+OptMapDataGenerator
+- Move SimuDataNode out as an independent class
+OptMapDataReader
+- Modified to support new bnx format
+OptMapDataWriter
+- Modified to support new cmap and bnx format
+- Modified writeAll methods to accept more general parameters
+OptMapResultReader
+- modified oma and omd parsing for fragmentInfo incorporation
+- Modified to support new xmap format
+OMBlastCore
+- Added supprot to allowDiffRefQuery parameter
+OMBlastMapper
+- Added supprot to allowDiffRefQuery parameter
+Kmer
+- Removed unused variables, methods and constructors
+- Added methods: getReverse, getForwardSizes, getReverseSizes, getAverageSizes
+- Used different way to generate hashCode
+Seed
+- Removed support to error-containing seeds (Rewrite getCigar method)
+ExtendOptionParser
+- Added support to manualGeneration option
+CollinearBlock
+- Rewrite
+CollinearBlockOrder
+- Added support to assignReadOptions and assignWriterOptions
+CollinearBlockReader
+- Remove unused variables
+CollinearBlockWriter
+- Remove unused variables
+GroupingEntry
+- Accept more general parameters
+DataTools
+- Added parameter staticid
+ResultTools
+- Added parameters qprefix, rprefix
+OMView
+- Added support to MultipleOpticalMapsBlockControlPanel/MultipleOpticalMapsBlockView, CompressionFormat
+- Now accepted SV input
+- Added new ambiguousFileLoader support viewin
+ViewSetting
+- Added view settings: mabMoleculeSpace, showCoverage, showCoverageAxis, coverageAxisUnit, coverageAxisColor, maxDisplayCoverage, separateAlignmentDisplay, useVariableColor, hideBlockThreshold, hideOverlapBlocks, useVariabilityColor, collapseSameGroupQuery, blockConnectionLineWidth
+- SVObjectSize changed to minSpaceSize
+- Use ColorStringParser for fields parsing
+- Settings import can be space-separated files instead of strict tab-separated files
+AlignmentView
+- Added support to separateAlignmentDisplay
+AnchorView
+- Fixed minor bug: replace maMoleculeSpace with moleculeSpace
+MultipleOpticalMapsView
+- Support new display features and bug fixing
+RegionalView
+- Added support to coverage
+VCoverage
+- Rewrite coverage display
+VData
+- Added getData method
+VMapMolecule
+- Rewriter color display 
+VVariability
+- Added empty constructor
+- Added getAverageVariability method
+StreamFastaNode
+- Added support to seq extraction even when start > stop (No reverse complement)
+ImageSaveFormat
+- Added file extension check
+
+Moved classes:
+- Moved src/aldenjava/opticalmapping/visualizer/utils/VPartialMoleculeInfo.java to src/aldenjava/opticalmapping/multiplealignment/BlockInfo.java
+- Moved src/aldenjava/opticalmapping/multiplealignment/SegmentIdentifier.java to src/aldenjava/opticalmapping/data/data/SegmentIdentifier.java
+- Moved classes from aldenjava/opticalmapping/application/svdetection to aldenjava/opticalmapping/svdetection
+
+New classes: 
+CompressedFilenameUtils
+CompressionFormat
+- Added support to compression file
+- FileNameCompressionExtensionFilter
+ColorStringParser
+- As an independent color string parser
+ClusteringFormat
+- Added format to identify clustering files
+DataQualityCheck
+- Added class for data quality output
+MAFEntry
+MAFNode
+MAFReader
+- Support for .maf files
+SegmentIdentifierFormat
+SegmentIdentifierReader
+SegmentIdentifierWriter
+- Support for segment identifier I/O
+RandomSeed
+- Added support to random seed parameters in OMTools
+BlockConnectionGraphGeneration
+BlockInfo
+EntryConnection
+EntryMatch
+GroupingEntryChain
+MADependentDirectedGraph
+MADirectedGraph
+MAMergeGraph
+MultipleAlignment
+MultipleAlignmentPerformanceAnalysis
+- Multiple alignment-related classes
+MultipleOpticalMapsBlockControlPanel
+MultipleOpticalMapsBlockView
+- MultipleOpticalMapsBlockView support
+VBlockSpace
+- Better display support for MultipleOpticalMapsView
+AlignmentHighlight
+CBLTools
+QueryReverse
+FrequentKmerHighlight
+TWINResultRepeatRemover
+- New scripts
+SeparateBNXScan
+- New scripts
+
 Version 1.3a
 Add support for AGP file, support old option names
 
@@ -62,6 +227,7 @@ DataStatistics
 - Rewrite the DataStatistics class
 ResultStatistics
 - Fixed bug on not able to import alignment results without data incorporated in the same file
+- Fixed bug on incorrect aligned molecules in alignment files with with translocation.
 EnzymeSiteNode
 - Added warning for incorrect enzyme name
 ResultTools

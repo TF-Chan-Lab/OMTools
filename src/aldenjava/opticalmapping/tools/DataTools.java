@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -66,6 +66,7 @@ public class DataTools {
 		OptionSpec<String> oidprefix = parser.accepts("idprefix", "Add a prefix to all ids").withRequiredArg().ofType(String.class);
 		OptionSpec<Integer> oidmodify = parser.accepts("idmodify", "Convert all ids to x .. x + n - 1 (x: input value, n: number of optical maps in the data file). A negative value disables this function. ").withRequiredArg().ofType(Integer.class).defaultsTo(-1);
 		OptionSpec<String> oidmodifylog = parser.accepts("idmodifylog", "Log file containing the id conversions").withRequiredArg().ofType(String.class);
+		OptionSpec<String> ostaticid = parser.accepts("staticid", "Use a static id for all optical maps (Override all other id-related parameters").withRequiredArg().ofType(String.class);
 		OptionSpec<Boolean> ofix = parser.accepts("fix", "Fix the data (negative signal-to-signal distance correction and etc.)").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
 		OptionSpec<Integer> ocondense = parser.accepts("condense", "Merge multiple signals closer than parameter into one signal").withRequiredArg().ofType(Integer.class).defaultsTo(0);
 		OptionSpec<Long> oremoveseg = parser.accepts("removeseg", "Remove segments smaller than the parameter").withRequiredArg().ofType(Long.class).defaultsTo(-1L);
@@ -114,6 +115,9 @@ public class DataTools {
 			else
 				bw.write("#No ID modification was performed.");
 		}
+		String staticid = null;
+		if (options.has(ostaticid))
+			staticid = ostaticid.value(options);
 		int shift = oshift.value(options);
 		HashSet<Integer> selectedRandomData = null;
 		if (options.has(orandomdata))
@@ -203,7 +207,9 @@ public class DataTools {
 					{
 						if (selectedRandomData == null || selectedRandomData.contains(count))
 						{
-							if (idmodify >= 0 || idprefix != null)
+							if (targetRegionMap != null)
+								data = data.subRefNode(targetRegionMap.get(data.name));
+							if (idmodify >= 0 || idprefix != null || staticid != null)
 							{
 								String oldid = data.name;
 								String newid = oldid;
@@ -211,6 +217,8 @@ public class DataTools {
 									newid = Integer.toString(count + idmodify);
 								if (idprefix != null)
 									newid = idprefix + newid;
+								if (staticid != null)
+									newid = staticid;
 								if (options.has(oidmodifylog))	
 									bw.write(oldid + "\t" + newid + "\n");
 								data.name = newid;
@@ -223,9 +231,7 @@ public class DataTools {
 							if (condense > 0)
 								data.degenerate(condense);
 							if (removeseg >= 0)
-								data.removeSmallSegments(removeseg);
-							if (targetRegionMap != null)
-								data = data.subRefNode(targetRegionMap.get(data.name));
+								data.removeSmallSegments(removeseg);							
 							if (shift != 0 && data.size != 0) {
 								shift %= data.size;
 								if (shift < 0)

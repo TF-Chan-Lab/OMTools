@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -39,13 +39,13 @@ import java.util.List;
 
 import joptsimple.OptionSet;
 import aldenjava.opticalmapping.GenomicPosNode;
-import aldenjava.opticalmapping.application.svdetection.StandardSVNode;
-import aldenjava.opticalmapping.application.svdetection.StandardSVReader;
-import aldenjava.opticalmapping.application.svdetection.StandardSVWriter;
 import aldenjava.opticalmapping.data.mappingresult.OptMapResultNode;
 import aldenjava.opticalmapping.data.mappingresult.OptMapResultReader;
 import aldenjava.opticalmapping.data.mappingresult.OptMapResultWriter;
 import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
+import aldenjava.opticalmapping.svdetection.StandardSVNode;
+import aldenjava.opticalmapping.svdetection.StandardSVReader;
+import aldenjava.opticalmapping.svdetection.StandardSVWriter;
 
 public class LiftOver {
 

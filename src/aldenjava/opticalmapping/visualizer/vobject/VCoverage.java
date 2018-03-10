@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -99,13 +99,16 @@ public class VCoverage extends VObject {
 */
 package aldenjava.opticalmapping.visualizer.vobject;
 
+import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
 import aldenjava.common.SimpleLongLocation;
+import aldenjava.common.UnweightedRange;
 import aldenjava.common.WeightedRange;
 import aldenjava.opticalmapping.visualizer.ViewSetting;
 
@@ -136,7 +139,10 @@ public class VCoverage extends VObject {
 
 	@Override
 	public void autoSetSize() {
-		this.setSize((int) (getDNALength() / dnaRatio * ratio), (int) (ViewSetting.coverageHeight * ratio));
+		if (startEndPoint == null)
+			this.setSize(0, 0);
+		else
+			this.setSize((int) (getDNALength() / dnaRatio * ratio), (int) (ViewSetting.coverageHeight * ratio));
 	}
 
 
@@ -153,10 +159,14 @@ public class VCoverage extends VObject {
 
 		g.setPaint(ViewSetting.coverageColor);
 		int max = 0;
-		for (WeightedRange<Long, Integer> range : coverageRanges)
-			if (max < range.weight)
-				max = range.weight;
-		max = 200;
+		if (ViewSetting.maxDisplayCoverage >= 0)
+			max = ViewSetting.maxDisplayCoverage;
+		else {
+			for (WeightedRange<Long, Integer> range : coverageRanges)
+				if (max < range.weight)
+					max = range.weight;
+		}
+		
 		for (WeightedRange<Long, Integer> range : coverageRanges) {
 			Rectangle2D rect = new Rectangle2D.Double((range.min - startEndPoint.min) / dnaRatio * ratio, (max - range.weight >= 0 ? (max - range.weight) : 0) / (double) max * ViewSetting.coverageHeight * ratio, range.length() / dnaRatio * ratio, range.weight / (double) max * ViewSetting.coverageHeight * ratio);
 			g.fill(rect);
@@ -164,8 +174,43 @@ public class VCoverage extends VObject {
 //			System.out.println((int) ((range.min - startEndPoint.min) / dnaRatio * ratio) + "\t" + (int) ((max - range.indicator) / (double) max * ViewSetting.coverageHeight * ratio) + "\t" + (int) (range.length() / dnaRatio * ratio) + "\t" + (int) (range.indicator / (double) max * ViewSetting.coverageHeight * ratio));
 		}
 		
+		if (ViewSetting.showCoverageAxis) {
+			int axisValue = 0;
+			g.setPaint(ViewSetting.coverageAxisColor);
+			g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{2.0f}, 0.0f));
+			while (axisValue <= max) {
+				g.draw(new Line2D.Double(0, (max - axisValue) / (double) max * ViewSetting.coverageHeight * ratio, getWidth(), (max - axisValue) / (double) max * ViewSetting.coverageHeight * ratio));
+				axisValue += ViewSetting.coverageAxisUnit;
+			}
+		}	
 		
 	}
+	
+	@Override
+	public boolean contains(int x, int y) {
+		long correctedX = (long) (x * dnaRatio / ratio + startEndPoint.min);
+		UnweightedRange<Long> queryRange = new UnweightedRange<>(correctedX, correctedX);
+		for (WeightedRange<Long, Integer> range : coverageRanges) {
+			if (range.overlap(queryRange))
+				setToolTipText("Coverage: " + range.getWeight());
+		}
+		return super.contains(x, y);
+	}
 
+	public double getAverageCoverage(UnweightedRange<Long> targetRange) {
+		double totalCoverage = 0;
+
+		for (WeightedRange<Long, Integer> range : coverageRanges)
+			if (range.overlap(targetRange)) {
+				System.out.println(range.min + "\t" + range.max + "\t" + range.weight);
+				System.out.println(targetRange.min + "\t" + targetRange.max);
+				totalCoverage += range.overlapSize(targetRange) / (double) targetRange.length() * range.weight;
+			}
+		
+		return totalCoverage;
+
+	}
+
+	
 
 }

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -45,7 +45,7 @@ public class VInversion extends VSpace {
 
 	@Override
 	public void autoSetSize() {
-		this.setSize(Math.max((int) (reflength / dnaRatio * ratio), (int) (ViewSetting.SVObjectSize / dnaRatio * ratio)), (int) (ViewSetting.bodyHeight * ratio));
+		this.setSize(Math.max((int) (reflength / dnaRatio * ratio), (int) (ViewSetting.minSpaceSize / dnaRatio * ratio)), (int) (ViewSetting.bodyHeight * ratio));
 	}
 
 	@Override
@@ -56,13 +56,13 @@ public class VInversion extends VSpace {
 		g.setPaint(ViewSetting.gapStrokeColor);
 		// Drawing the mid line
 		double refSpaceWidth = (reflength / dnaRatio * ratio);
-		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
+		double midPtX = ((reflength >= ViewSetting.minSpaceSize ? reflength : ViewSetting.minSpaceSize) / 2.0) / dnaRatio * ratio;
 		if (refSpaceWidth > 0)
 			g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
 		
 		// Drawing the arc
 		int midPtY = this.getHeight() / 2;
-		int arcSize = (int) (ViewSetting.SVObjectSize / dnaRatio * ratio);
+		int arcSize = (int) (ViewSetting.minSpaceSize / dnaRatio * ratio);
 		g.drawArc((int) (midPtX - arcSize / 4), midPtY - arcSize / 4, arcSize / 2, arcSize / 2, 180, 360);
 		
 	}

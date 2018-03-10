@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import aldenjava.opticalmapping.data.data.DataCovNode;
 import aldenjava.opticalmapping.data.data.DataNode;
@@ -52,13 +53,8 @@ public class ResultStatistics {
 	LinkedHashMap<String, DataNode> optrefmap = null;
 	LinkedHashMap<String, DataCovNode> optrefcovmap = null;
 	
-//	private int totalMolecules;
-//	private int totalMaps;
-//	private int totalPartialMaps;
-//	private int correctMaps;
-	
 	LinkedHashMap<String, Integer> alignedMaps;
-	LinkedHashMap<String, Integer> alignedMolecules;
+	LinkedHashMap<String, Set<String>> alignedMolecules;
 	LinkedHashMap<String, DataNode> dataInfo;
 	LinkedHashMap<String, Long> alignedLength;
 	
@@ -84,13 +80,13 @@ public class ResultStatistics {
 		}
 
 		alignedMaps = new LinkedHashMap<String, Integer>();
-		alignedMolecules = new LinkedHashMap<String, Integer>();
+		alignedMolecules = new LinkedHashMap<String, Set<String>>();
 		alignedLength = new LinkedHashMap<String, Long>();
 		if (optrefcovmap != null) {
 			for (String key : optrefcovmap.keySet())
 				alignedMaps.put(key, 0);
 			for (String key : optrefcovmap.keySet())
-				alignedMolecules.put(key, 0);
+				alignedMolecules.put(key, new HashSet<>());
 			for (String key : optrefcovmap.keySet())
 				alignedLength.put(key, 0L);
 		}
@@ -119,7 +115,7 @@ public class ResultStatistics {
 	}
 	
 	public void update(List<OptMapResultNode> resultlist) {
-		DataNode data = resultlist.get(0).parentFrag;
+		DataNode data = resultlist.get(0).parentFrag;		
 		appearedMolecules.add(data.name);
 		if (resultlist.get(0).isUsed()) {
 			// Simulation statistics
@@ -167,8 +163,8 @@ public class ResultStatistics {
 			
 			for (String s : alignedRef) {
 				if (!alignedMolecules.containsKey(s))
-					alignedMolecules.put(s, 0);
-				alignedMolecules.put(s, alignedMolecules.get(s) + 1);
+					alignedMolecules.put(s, new HashSet<>());
+				alignedMolecules.get(s).add(data.name);
 			}
 		}
 		else {
@@ -211,33 +207,16 @@ public class ResultStatistics {
 		int[] covarray = new int[]{
 				1, 3, 5, 10	
 			};
-//		if (false)
-//		{
-//			bw.write(String.format("#Reference\tReferenceSize\tTotalMolecules\tAlignedMolecules\tPartialMaps\tTotalSize\tCoverage"));
-//			for (int cov : covarray)
-//				bw.write(String.format("\tCoverage-%d-CoveredRegion", cov));
-//			bw.write("\n");
-//		}			
-//		for (String key : optrefcovmap.keySet())
-//		{
-//			if (false)
-//				bw.write(String.format("%s\t%d\t%d\t%d\t%d\t%d\t%.4f", key, optrefcovmap.get(key).size, fragmentInfo.size(), alignedMolecules.get(key), alignedMaps.get(key), alignedLength.get(key), alignedLength.get(key) / (double) optrefcovmap.get(key).size));
+		
+		Set<String> alignedMoleculeSets = new HashSet<>();
 		for (String key : alignedMolecules.keySet())
-			totalMolecules += alignedMolecules.get(key);
+			alignedMoleculeSets.addAll(alignedMolecules.get(key));
+		totalMolecules = alignedMoleculeSets.size();
 		for (String key : alignedMaps.keySet())
 			totalMaps += alignedMaps.get(key);
 		for (String key : alignedLength.keySet())
 			totalLength += alignedLength.get(key);
 					
-//			if (false)
-//			{
-//				for (int cov : covarray)
-//					bw.write(String.format("\t%.4f", optrefcovmap.get(key).getReferenceCoveredRatio(cov)));
-//				bw.write("\n");
-//			}
-//		}
-//		if (false)
-//			bw.write("\n");
 	
 		
 		String finalString = "";
@@ -260,43 +239,8 @@ public class ResultStatistics {
 			}
 			finalString += ("\n");
 		return finalString;
-//		bw.write(String.format("Total Molecules:\t%d\n", totalMolecules));
-//		bw.write(String.format("Total Maps:\t%d\n", totalMaps));
-//		bw.write(String.format("Molecule Usage:\t%.4f\n", totalMaps / (double)totalMolecules));
-//		bw.write(String.format("Accuracy:\t%.4f\n", correctMaps / (double) totalMaps));
-//		bw.write(String.format("Total Partial Maps:\t%d\n", totalPartialMaps));
-//		bw.write(String.format("Average Partial Maps:\t%.4f\n", totalPartialMaps / (double) totalMaps));
-//		int[] covarray = new int[]{
-//			1, 3, 5, 10	
-//		};
-//		for (int cov : covarray)
-//			bw.write(String.format("Coverage above %d:\t%.4f\n", cov, ReferenceCoveredPercentNode.getCoveredRatio(optrefcovmap, cov)));
-		
 	}
 	
-//	public String getCoverageString()
-//	{
-//		System.out.println("S");
-//		
-////		 for outputing coverage file to input in circos
-//		ExtendedLocation prevloc = new ExtendedLocation(-1, -1, 0);
-//		StringBuilder finalString = new StringBuilder();
-//		for (DataCovNode ref : optrefcovmap.values()) {
-//			ref.process2();
-//			for (ExtendedLocation loc : ref.processedloclist)
-//			{
-//				if (loc.min - prevloc.max > 1)
-//					if (prevloc.max == -1)
-//						finalString.append(String.format("%s %d %d %d\n", ref.name, 0, ref.refp[loc.min - 1] - 1, 0));
-//					else
-//						finalString.append(String.format("%s %d %d %d\n", ref.name, ref.refp[prevloc.max], ref.refp[loc.min - 1] - 1, 0));
-//				finalString.append(String.format("%s %d %d %d\n", ref.name, ref.refp[loc.min - 1], ref.refp[loc.max] - 1, loc.indicator));
-//				prevloc = loc;
-//			}
-//		}
-//		System.out.println("S");
-//		return finalString.toString();
-//	}
 	
 	public static void main (String[] args) throws IOException
 	{

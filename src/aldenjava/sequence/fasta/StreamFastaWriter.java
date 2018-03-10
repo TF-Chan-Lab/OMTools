@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -36,27 +36,23 @@ import joptsimple.OptionSet;
 import aldenjava.opticalmapping.data.OMWriter;
 import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
 
-public class StreamFastaWriter extends OMWriter<StreamFastaNode>{
-//	private BufferedWriter bw;
+public class StreamFastaWriter extends OMWriter<StreamFastaNode> {
 
-	public StreamFastaWriter(OptionSet options) throws IOException 
-	{
+	public StreamFastaWriter(OptionSet options) throws IOException {
 		this((String) options.valueOf("fastaout"));
 	}
 
-	public StreamFastaWriter(String filename) throws IOException
-	{
+	public StreamFastaWriter(String filename) throws IOException {
 		super(filename);
-//		bw = new BufferedWriter(new FileWriter(filename));
-//		initializeHeader();
 	}
-	
-//	public void initializeHeader() throws IOException
-//	{
-		// Nothing to initialize
-//	}
-	public void write(StreamFastaNode sfn) throws IOException
-	{
+
+	@Override
+	protected void initializeHeader() {
+		// Override to not output any comments line
+	}
+
+	@Override
+	public void write(StreamFastaNode sfn) throws IOException {
 		bw.write(">");
 		bw.write(sfn.name);
 		bw.write("\n");
@@ -64,23 +60,20 @@ public class StreamFastaWriter extends OMWriter<StreamFastaNode>{
 		bw.write("\n");
 	}
 
-	public static void writeAllData(String filename, LinkedHashMap<String, StreamFastaNode> fastaInfo) throws IOException
-	{
+	public static void writeAllData(String filename, LinkedHashMap<String, StreamFastaNode> fastaInfo) throws IOException {
 		StreamFastaWriter sfw = new StreamFastaWriter(filename);
 		for (StreamFastaNode sfn : fastaInfo.values())
 			sfw.write(sfn);
 		sfw.close();
 	}
-	public static void writeAllData(OptionSet options, LinkedHashMap<String, StreamFastaNode> fastaInfo) throws IOException
-	{
+
+	public static void writeAllData(OptionSet options, LinkedHashMap<String, StreamFastaNode> fastaInfo) throws IOException {
 		writeAllData((String) options.valueOf("fastaout"), fastaInfo);
 	}
 
-	public static void assignOptions(ExtendOptionParser parser)
-	{
+	public static void assignOptions(ExtendOptionParser parser) {
 		parser.addHeader("Stream Fasta Writer Options", 1);
-		parser.accepts("fastaout", "fasta output file").withRequiredArg().ofType(String.class);		
+		parser.accepts("fastaout", "fasta output file").withRequiredArg().ofType(String.class).required();
 	}
 
 }
-

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import aldenjava.opticalmapping.data.OMReader;
+import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
 
 // unfinished class. First line description or browser setting is not supported
 public class BEDReader extends OMReader<BEDNode> {
@@ -131,5 +132,9 @@ public class BEDReader extends OMReader<BEDNode> {
 		scanner.close();
 		proceedNextLine();
 		return new BEDNode(chrom, chromStart, chromStop, name, score, strand, thickStart, thickEnd, itemRgb, blockCount, blockSizes, blockStarts);
+	}
+	public static void assignOptions(ExtendOptionParser parser, int level) {
+		parser.addHeader("BED Reader", level);
+		parser.accepts("bedin", "Input BED File").withRequiredArg().ofType(String.class);
 	}
 }

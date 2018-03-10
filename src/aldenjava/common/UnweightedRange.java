@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -74,7 +74,8 @@ public class UnweightedRange<R extends Number & Comparable<R>> {
 	}
 
 	public R length() {
-		return NumberOperation.subtraction(this.max, this.min);
+		Class<R> rClass = (Class<R>) min.getClass();
+		return NumberOperation.addition(NumberOperation.subtraction(this.max, this.min), NumberOperation.<R>getNumber(rClass, 1));
 	}
 	
 	private boolean rangeClassSupported(R r) {
@@ -91,7 +92,7 @@ public class UnweightedRange<R extends Number & Comparable<R>> {
 	
 	public boolean canStitch(UnweightedRange<R> range) {
 		Class<R> rClass = (Class<R>) min.getClass();
-		return NumberOperation.subtraction(this.max, range.min).compareTo(NumberOperation.<R>getNumber(rClass, 1)) == 0;
+		return NumberOperation.subtraction(range.min, this.max).compareTo(NumberOperation.<R>getNumber(rClass, 1)) == 0;
 	}
 	
 	public static <R extends Number & Comparable<R>> UnweightedRange<R> getRangeIntersection(UnweightedRange<R> range1, UnweightedRange<R> range2) {
@@ -117,13 +118,14 @@ public class UnweightedRange<R extends Number & Comparable<R>> {
 					previousRange = new UnweightedRange<R>(previousRange.min, range.max);
 				else {
 					newRanges.add(previousRange);
-					previousRange = range;
+					previousRange = range;					
 				}
 			}
 			else
 				previousRange = range;
 		}
-		newRanges.add(previousRange);
+		if (previousRange != null)
+			newRanges.add(previousRange);
 		return newRanges;
 	}
 

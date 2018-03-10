@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -618,7 +618,7 @@ public class AnchorView extends ViewPanel {
 		// Determine the font size
 		Font font; 
 		int fsize = 1;
-		int h = (int) (ViewSetting.maMoleculeSpace * ratio);
+		int h = (int) (ViewSetting.moleculeSpace * ratio);
 		while (true) {
 			font = new Font("Arial", Font.PLAIN, fsize + 1);
 			int testHeight = getFontMetrics(font).getHeight();

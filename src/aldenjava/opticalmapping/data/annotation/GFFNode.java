@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -63,6 +63,18 @@ public class GFFNode extends AnnotationNode {
 			attribute.put(l[0], l[1]);
 		}
 	}
+	public GFFNode(String seqname, String source, String feature, long start, long end, Double score, String strand, Integer frame, LinkedHashMap<String, String> attribute) {
+		super(new GenomicPosNode(seqname, start, end));
+		this.seqname = seqname;
+		this.source = source;
+		this.feature = feature;
+		this.start = start;
+		this.end = end;
+		this.score = score;
+		this.strand = strand;
+		this.frame = frame;
+		this.attribute = attribute;
+	}
 
 	@Override
 	public String getAnnoType() {
@@ -74,6 +86,15 @@ public class GFFNode extends AnnotationNode {
 			return attribute.get("gene_name");
 		if (attribute.containsKey("gene_id"))
 			return attribute.get("gene_id");
+		if (attribute.containsKey("product"))
+			return attribute.get("product");
 		return super.getName();
+	}
+	@Override
+	public void setRegion(GenomicPosNode region) {
+		this.seqname = region.ref;
+		this.start = region.start;
+		this.end = region.stop;
+		super.setRegion(region);
 	}
 }

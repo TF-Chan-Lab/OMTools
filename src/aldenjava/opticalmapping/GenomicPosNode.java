@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -32,6 +32,8 @@ package aldenjava.opticalmapping;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import joptsimple.OptionSet;
 import aldenjava.common.SimpleLongLocation;
@@ -50,28 +52,45 @@ public final class GenomicPosNode implements Comparable<GenomicPosNode> {
 	public final long stop;
 //	public final static String separator = "[:\\-\\s]+"; // :, -, space
 	public final static String separator = "[:\\-]+"; // :, -, space
+	public final Pattern pattern = Pattern.compile("\\s*([^:\\s]+)(?::|\\s)(-?\\d+)(?:(?:-|\\s)(-?\\d+))?\\s*");
+//	public final Pattern pattern = Pattern.compile("\\s*([^:]+)(?::)(-?\\d+)(?:(?:-)(-?\\d+))?\\s*");
 	public GenomicPosNode(String s) throws IllegalArgumentException {
-		String[] l = s.split(GenomicPosNode.separator);
-		if (s.isEmpty() || (l.length != 2 && l.length != 3))
-			throw new IllegalArgumentException("Wrong genomic position format.");
-		s = s.trim();
-
-		String ref = l[0];
-		long start;
-		long stop;
-		try {
-			start = Long.parseLong(l[1]);
-			if (l.length == 2)
-				stop = start;
+//		String[] l = s.split(GenomicPosNode.separator);
+//		if (s.isEmpty() || (l.length != 2 && l.length != 3))
+//			throw new IllegalArgumentException("Wrong genomic position format.");
+//		s = s.trim();
+//
+//		String ref = l[0];
+//		long start;
+//		long stop;
+//		try {
+//			start = Long.parseLong(l[1]);
+//			if (l.length == 2)
+//				stop = start;
+//			else
+//				stop = Long.parseLong(l[2]);
+//		} catch (NumberFormatException e) {
+//			throw new IllegalArgumentException("Wrong genomic position format.");
+//		}
+//		this.ref = ref;
+//		this.start = start;
+//		this.stop = stop;
+		Matcher matcher = pattern.matcher(s);
+		if (matcher.matches()) {
+			String ref = matcher.group(1);
+			String start = matcher.group(2);
+			String stop = matcher.group(3);
+			this.ref = ref;
+			this.start = Long.parseLong(start);
+			if (stop == null)
+				this.stop = this.start;
 			else
-				stop = Long.parseLong(l[2]);
-		} catch (NumberFormatException e) {
+				this.stop = Long.parseLong(stop);
+		}
+		else {
 			throw new IllegalArgumentException("Wrong genomic position format.");
 		}
-		this.ref = ref;
-		this.start = start;
-		this.stop = stop;
-
+			
 	}
 
 	public GenomicPosNode(String ref, long start) {
@@ -141,6 +160,10 @@ public final class GenomicPosNode implements Comparable<GenomicPosNode> {
 			return 0;
 	}
 
+	public boolean overlap(GenomicPosNode region) {
+		return overlapSize(region) >= 1;
+	}
+	
 	@Override
 	public String toString() {
 		if (start != stop)
@@ -214,6 +237,9 @@ public final class GenomicPosNode implements Comparable<GenomicPosNode> {
 	public static void assignOptions(ExtendOptionParser parser, int level) {
 		parser.addHeader("Region", level);
 		parser.accepts("region", "The region of interest.").withOptionalArg().ofType(String.class);
+	}
+	public boolean contains(long position) {
+		return (start <= position && stop >= position);
 	}
 
 	public boolean contains(GenomicPosNode region) {

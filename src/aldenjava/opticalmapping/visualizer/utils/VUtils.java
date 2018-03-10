@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -237,120 +237,4 @@ public class VUtils {
 	}
 
 	
-//	public static List<OptMapResultNode> resultlist modfiyVariedReference(List<OptMapResultNode> resultlist, ReferenceNode ref)
-//	{
-//		FragmentNode f = new FragmentNode(ref);
-//		Collections.sort(resultlist, Collections.reverseOrder(OptMapResultNode.mappedscorecomparator));
-//		if (resultlist.get(0).mappedstrand == -1)
-//			f.reverse();
-//		
-//	}
-
-	
-//	public static boolean trimOverlap(LinkedHashMap<String, ReferenceNode> optrefmap, int maxTrim, OptMapResultNode result1, OptMapResultNode result2)
-//	{
-//		// must be same strand
-//		if (result1.mappedstrand != result2.mappedstrand)
-//			return false;
-//		if (!result1.overlap(result2))
-//			return true;
-////		boolean reverseResult = false;
-////		if (result1.mappedstrand == -1)
-////		{
-////			result1.reverse();
-////			result2.reverse();
-////			reverseResult = true;
-////		}
-//		boolean debug = false;
-////		if (result1.id.equalsIgnoreCase("2126043"))
-////			debug = true;
-//		if (result1.mappedstart > result2.mappedstart)
-//		{
-//			OptMapResultNode tmpresult = result1;
-//			result1 = result2;
-//			result2 = tmpresult;
-//		}
-//		// naive trim
-//		// pair 1: 
-//		if (debug)
-//		{
-//			System.out.println("=======Start========");
-//			System.out.printf("%d\t%d\t%d\t%d\t%s\n", result1.subfragstart, result1.subfragstop, result1.subrefstart, result1.subrefstop, result1.cigar.getPrecigar());
-//			System.out.printf("%d\t%d\t%d\t%d\t%s\n", result2.subfragstart, result2.subfragstop, result2.subrefstart, result2.subrefstop, result2.cigar.getPrecigar());
-//			System.out.println("======================");
-//		}
-//		double bestscore = Double.NEGATIVE_INFINITY;
-//		int bestTrim1 = -1;
-//		int bestTrim2 = -1;
-//		for (int trimmed = 1; trimmed <= maxTrim; trimmed++)
-//		{
-//			for (int trim1 = 0; trim1 <= trimmed; trim1++)
-//			{
-//				int trim2 = trimmed - trim1;
-//				OptMapResultNode tresult1 = new OptMapResultNode(result1);
-//				OptMapResultNode tresult2 = new OptMapResultNode(result2);
-//				
-//				if ((tresult1.cigar.getMatch() - trim1 >= 5) && (tresult2.cigar.getMatch() - trim2 >= 5)) // at least 5 matches
-//				{
-//					tresult1.trimResult(trim1 * -1, optrefmap);
-//					tresult2.trimResult(trim2, optrefmap);
-//					tresult1.updateScore(optrefmap, 5, 2, 2);
-//					tresult2.updateScore(optrefmap, 5, 2, 2);
-//					if (debug)
-//					{
-//						System.out.printf("%d\t%d\t%b\t%.2f\t%.2f\n", trim1, trim2, tresult1.overlap(tresult2), tresult1.mappedscore, tresult2.mappedscore);
-//						System.out.printf("%d\t%d\t%d\t%d\t%s\n", tresult1.subfragstart, tresult1.subfragstop, tresult1.subrefstart, tresult1.subrefstop, tresult1.cigar.getPrecigar());
-//						System.out.printf("%d\t%d\t%d\t%d\t%s\n", tresult2.subfragstart, tresult2.subfragstop, tresult2.subrefstart, tresult2.subrefstop, tresult2.cigar.getPrecigar());
-//						System.out.println("--------------------------");
-//					}
-//					if (!tresult1.overlap(tresult2))
-//						if (tresult1.mappedscore + tresult2.mappedscore > bestscore)
-//						{
-//							bestscore = tresult1.mappedscore + tresult2.mappedscore;
-//							bestTrim1 = trim1;
-//							bestTrim2 = trim2;
-//						}
-//				}
-//			}
-//		}
-//		if (bestTrim1 == -1 || bestscore < 50)
-//			return false;
-//		else
-//		{
-//			
-////			if (result1.id.equalsIgnoreCase("2466029"))
-////			{
-////				System.out.println("Inside");
-////				System.out.printf("bestTrim1 %d; BestTrim2 %d\n", bestTrim1, bestTrim2);
-////				System.out.printf("1: %d-%d, %s\n", result1.subfragstart, result1.subfragstop, result1.cigar.getPrecigar());
-////				System.out.printf("2: %d-%d, %s\n", result2.subfragstart, result2.subfragstop, result2.cigar.getPrecigar());
-////			}
-//			
-//			result1.trimResult(bestTrim1 * -1, optrefmap);
-//			result2.trimResult(bestTrim2, optrefmap);
-//			result1.updateScore(optrefmap, 5, 2, 2);
-//			result2.updateScore(optrefmap, 5, 2, 2);
-//			if (debug)
-//			{
-//				System.out.println("======================");
-//				System.out.printf("%d\t%d\t%d\t%d\t%s\n", result1.subfragstart, result1.subfragstop, result1.subrefstart, result1.subrefstop, result1.cigar.getPrecigar());
-//				System.out.printf("%d\t%d\t%d\t%d\t%s\n", result2.subfragstart, result2.subfragstop, result2.subrefstart, result2.subrefstop, result2.cigar.getPrecigar());
-//				System.out.println("======================");
-//			}
-////			if (result1.id.equalsIgnoreCase("2466029"))
-////			{
-////				System.out.println("Inside 2");
-////				System.out.printf("bestTrim1 %d; BestTrim2 %d\n", bestTrim1, bestTrim2);
-////				System.out.printf("1: %d-%d, %s\n", result1.subfragstart, result1.subfragstop, result1.cigar.getPrecigar());
-////				System.out.printf("2: %d-%d, %s\n", result2.subfragstart, result2.subfragstop, result2.cigar.getPrecigar());
-////			}
-////			if (reverseResult)
-////			{
-////				result1.reverse();
-////				result2.reverse();
-////			}
-//			return true;
-//		}
-//	}
-
 }

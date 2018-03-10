@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -30,6 +30,7 @@
 package aldenjava.opticalmapping.mapper.seeding;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -43,54 +44,20 @@ public class Kmer {
 
 	public final String source;
 	public final int pos;
-	public final List<Long> sizelist;
-	public final List<Long> realsizelist;
-	public final List<Integer> errorposlist;
-
-	public Kmer(String source, int pos, List<Long> sizelist, List<Long> realsizelist, List<Integer> errorposlist) {
-		this.source = source;
-		this.pos = pos;
-		this.sizelist = sizelist;
-		this.realsizelist = realsizelist;
-		this.errorposlist = errorposlist;
-	}
-
-	public Kmer(String source, int pos, List<Long> realsizelist, List<Integer> errorposlist) {
-		this.source = source;
-		this.pos = pos;
-		this.sizelist = getSizeList(realsizelist, errorposlist);
-		this.realsizelist = realsizelist;
-		this.errorposlist = errorposlist;
-	}
+	private final List<Long> sizelist;
 
 	public Kmer(String source, int pos, List<Long> sizelist) {
 		this.source = source;
 		this.pos = pos;
 		this.sizelist = sizelist;
-		this.realsizelist = sizelist;
-		this.errorposlist = new ArrayList<Integer>();
 	}
 
 	public Kmer(Kmer kmer) {
 		this.source = kmer.source;
 		this.pos = kmer.pos;
 		this.sizelist = new ArrayList<Long>(kmer.sizelist);
-		this.realsizelist = new ArrayList<Long>(kmer.realsizelist);
-		this.errorposlist = new ArrayList<Integer>(kmer.errorposlist);
 	}
 
-	private List<Long> getSizeList(List<Long> realsizelist, List<Integer> errorposlist) {
-		List<Long> sizelist = new ArrayList<Long>();
-		long cumSize = 0;
-		for (int i = 0; i < realsizelist.size(); i++) {
-			cumSize += realsizelist.get(i);
-			if (!errorposlist.contains(i)) {
-				sizelist.add(cumSize);
-				cumSize = 0;
-			}
-		}
-		return sizelist;
-	}
 
 	public long get(int pos) {
 		return sizelist.get(pos);
@@ -117,14 +84,14 @@ public class Kmer {
 	}
 
 	public int getErrorNo() {
-		return errorposlist.size();
+		return 0;
 	}
 
 	public Kmer newKmer(double sizeratio, int extrasize) {
 		List<Long> newsizelist = new ArrayList<Long>();
 		for (int i = 0; i < this.sizelist.size(); i++)
 			newsizelist.add((long) (this.sizelist.get(i) * sizeratio) + extrasize);
-		return new Kmer(this.source, this.pos, newsizelist, realsizelist, errorposlist);
+		return new Kmer(this.source, this.pos, newsizelist);
 	}
 
 	public boolean limitRange(Kmer kmer, int measure, double ear) {
@@ -141,6 +108,12 @@ public class Kmer {
 		return (ubound >= lbound);
 	}
 
+	public Kmer getReverse() {
+		List<Long> newsizelist = new ArrayList<>(sizelist);
+		Collections.reverse(newsizelist);
+		return new Kmer(source, pos, newsizelist);
+		
+	}
 	public DataNode toDataNode() {
 		return toDataNode(this.source + "_" + this.pos);
 	}
@@ -172,7 +145,7 @@ public class Kmer {
 	}
 	@Override
 	public int hashCode() {
-		return this.source.hashCode() + this.pos;
+		return this.source.hashCode() * 37 + this.pos;
 	}
 	
 	public static Comparator<Kmer> comparator(int pos) {
@@ -221,5 +194,24 @@ public class Kmer {
 
 		};
 
+	}
+
+	public long[] getForwardSizes() {
+		long[] sizes = new long[k()];
+		for (int i = 0; i < k(); i++)
+			sizes[i] = get(i);
+		return sizes;
+	}
+	public long[] getReverseSizes() {
+		long[] sizes = new long[k()];
+		for (int i = 0; i < k(); i++)
+			sizes[i] = get(k() - i - 1);		
+		return sizes;
+	}
+	public long[] getAverageSizes() {
+		long[] sizes = new long[k()];
+		for (int i = 0; i < k(); i++)
+			sizes[i] = (get(i) + get(k() - i - 1)) / 2;
+		return sizes;
 	}
 }

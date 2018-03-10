@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -31,19 +31,14 @@ package aldenjava.opticalmapping.multiplealignment;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import javax.swing.ProgressMonitorInputStream;
-
-import aldenjava.opticalmapping.visualizer.OMView;
+import aldenjava.opticalmapping.miscellaneous.ExtendOptionParser;
 import joptsimple.OptionSet;
 
 public class CollinearBlockOrder {
@@ -75,12 +70,15 @@ public class CollinearBlockOrder {
 			for (String ind : individual)
 				assignedOrderMap.put(ind, group);
 		}
-	}
-	
+	}	
 	public List<String> getIndividualOrder() {
 		return individualOrder;
 	}
 	
+	public static void assignReadOptions(ExtendOptionParser parser, int level) {
+		parser.addHeader("Collinear block order reader", level);
+		parser.accepts("cboin", "Multiple alignment collinear blocks order input").withRequiredArg().ofType(String.class);
+	}
 	public static CollinearBlockOrder readAll(OptionSet options) throws IOException {
 		return readAll((String) options.valueOf("cboin"));
 	}
@@ -108,6 +106,11 @@ public class CollinearBlockOrder {
 		reader.close();
 		return new CollinearBlockOrder(orderMap);
 	}
+	
+	public static void assignWriteOptions(ExtendOptionParser parser, int level) {
+		parser.addHeader("Collinear block order writer", level);
+		parser.accepts("cboout", "Multiple alignment collinear blocks order output").withRequiredArg().ofType(String.class);;
+	}
 	public static void writeAll(OptionSet options, CollinearBlockOrder order) throws IOException {
 		writeAll((String) options.valueOf("cboout"), order);
 	}
@@ -117,5 +120,5 @@ public class CollinearBlockOrder {
 			for (String s : order.orderMap.get(key))
 				bw.write(key + "\t" + s + "\n");
 		bw.close();
-	}
+	}	
 }

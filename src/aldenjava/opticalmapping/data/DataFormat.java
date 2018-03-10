@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -34,8 +34,8 @@ import java.util.Map;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.apache.commons.io.FilenameUtils;
-
+import aldenjava.file.CompressedFilenameUtils;
+import aldenjava.file.FileNameCompressionExtensionFilter;
 import aldenjava.opticalmapping.miscellaneous.InvalidFileFormatException;
 
 /**
@@ -75,42 +75,6 @@ public enum DataFormat {
 		return extension;
 	}
 
-//	public boolean isFragmentFormat() {
-//		switch (this) {
-//			case REF:
-//			case FA01:
-//			case SPOTS:
-//			case OPT:
-//			case SILICO:
-//				return false;
-//			case DATA:
-//			case SDATA:
-//			case BNX:
-//			case CMAP:
-//				return true;
-//			default:
-//				return false;
-//		}
-//	}
-//
-//	public boolean isReferenceFormat() {
-//		switch (this) {
-//			case REF:
-//			case FA01:
-//			case SPOTS:
-//			case OPT:
-//			case SILICO:
-//				return true;
-//			case DATA:
-//			case SDATA:
-//			case BNX:
-//			case CMAP:
-//				return false;
-//			default:
-//				return false;
-//		}
-//	}
-
 	public static String[] getExtensions() {
 		String[] extensions = new String[DataFormat.values().length];
 		int index = 0;
@@ -130,9 +94,10 @@ public enum DataFormat {
 			lookupfileextmap.put(dformat.getExtension(), dformat);
 	}
 
+	
 	public static final DataFormat lookup(String path, int format) {
 		if (format == -1)
-			return lookupfileext(FilenameUtils.getExtension(path));
+			return lookupfileext(CompressedFilenameUtils.getDecompressedExtension(path));
 		if (!lookupmap.containsKey(format))
 			throw new InvalidFileFormatException();
 		return lookupmap.get(format);
@@ -158,12 +123,14 @@ public enum DataFormat {
 		return dataFormatHelp.toString();
 	}
 
-	public static final FileNameExtensionFilter[] getFileNameExtensionFilter() {
-		FileNameExtensionFilter[] filters = new FileNameExtensionFilter[DataFormat.values().length + 1];
+	public static final FileNameCompressionExtensionFilter[] getFileNameExtensionFilter() {
+		FileNameCompressionExtensionFilter[] filters = new FileNameCompressionExtensionFilter[DataFormat.values().length + 1];
 		int index = 0;
-		filters[index++] = new FileNameExtensionFilter("All supported format", DataFormat.getExtensions());
-		for (DataFormat dformat : DataFormat.values())
-			filters[index++] = new FileNameExtensionFilter(dformat.description, dformat.extension);
+		filters[index++] = new FileNameCompressionExtensionFilter("All supported format", DataFormat.getExtensions());
+		for (DataFormat dformat : DataFormat.values()) {
+			filters[index++] = new FileNameCompressionExtensionFilter(dformat.description, dformat.extension);
+//			filters[index++] = new FileNameExtensionFilter(dformat.description, CompressionFormat.expandAcceptedExtensions(dformat.extension));
+		}
 		return filters;
 	}
 

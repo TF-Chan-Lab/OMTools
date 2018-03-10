@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -30,7 +30,6 @@
 package aldenjava.opticalmapping.visualizer.vobject;
 
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Line2D;
@@ -45,7 +44,7 @@ public class VIndel extends VSpace {
 
 	@Override
 	public void autoSetSize() {
-		this.setSize((int) ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / dnaRatio * ratio), (int) (ViewSetting.bodyHeight * ratio));
+		this.setSize((int) ((reflength >= ViewSetting.minSpaceSize ? reflength : ViewSetting.minSpaceSize) / dnaRatio * ratio), (int) (ViewSetting.bodyHeight * ratio));
 	}
 
 	// Override the method to allow update on tool tip text
@@ -71,12 +70,12 @@ public class VIndel extends VSpace {
 		
 		// Drawing the mid line
 		double refSpaceWidth = (reflength / dnaRatio * ratio);
-		double midPtX = ((reflength >= ViewSetting.SVObjectSize ? reflength : ViewSetting.SVObjectSize) / 2.0) / dnaRatio * ratio;
+		double midPtX = ((reflength >= ViewSetting.minSpaceSize ? reflength : ViewSetting.minSpaceSize) / 2.0) / dnaRatio * ratio;
 		if (refSpaceWidth > 0)
 			g.draw(new Line2D.Double(midPtX - refSpaceWidth / 2.0, this.getHeight() / 2.0, midPtX + refSpaceWidth / 2.0, this.getHeight() / 2.0));
 		// Insertion, draw triangle
 		if (mollength > reflength) {
-			int[] triangleX = new int[] { (int) midPtX, (int) (midPtX - ViewSetting.SVObjectSize / dnaRatio * ratio / 2), (int) (midPtX + ViewSetting.SVObjectSize / dnaRatio * ratio / 2) };
+			int[] triangleX = new int[] { (int) midPtX, (int) (midPtX - ViewSetting.minSpaceSize / dnaRatio * ratio / 2), (int) (midPtX + ViewSetting.minSpaceSize / dnaRatio * ratio / 2) };
 			int[] triangleY = new int[] { this.getHeight() / 2, 1, 1 };
 			g.drawPolygon(triangleX, triangleY, 3);
 		}

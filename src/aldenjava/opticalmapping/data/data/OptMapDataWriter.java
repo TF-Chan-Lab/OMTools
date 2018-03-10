@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -30,7 +30,7 @@
 package aldenjava.opticalmapping.data.data;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLOutputFactory;
@@ -96,20 +96,39 @@ public class OptMapDataWriter extends OMWriter<DataNode> {
 				case OPT:
 					break;
 				case SDATA:
+					super.initializeHeader();
 					bw.write("#Fragment ID\tReference\tStrand\tStart\tStop\tSimuInfoDetail\tSize\tTotalSegments\tSegmentDetail\n");
 					break;
 				case DATA:
+					super.initializeHeader();
 					bw.write("#Fragment ID\tSize\tTotalSegments\tSegmentDetail\n");
 					break;
 				case BNX:
-					bw.write("# BNX File Version:	0.1\n");
+//					bw.write("# BNX File Version:	0.1\n");
+//					bw.write("# Label Channels:	1\n");
+//					bw.write("# Nickase Recognition Site 1:\n");
+//					bw.write("# Quality Score QX01:	SNR\n");
+//					bw.write("# Quality Score QX02:	Ave Intensity\n");
+//					bw.write("# All above comments are fake\n");
+//					bw.write("#0h	LabelChannel	MapID	Length\n");
+//					bw.write("#0f	int	int	float\n");
+//					bw.write("#1h	LabelChannel	LabelPositions[N]\n");
+//					bw.write("#1f	int	float\n");
+//					bw.write("#2h	LabelChannel	LabelPositions[N]\n");
+//					bw.write("#2h	int	float\n");
+//					bw.write("#Qh	QualityScoreID	QualityScores[N]\n");
+//					bw.write("#Qf	str	float\n");
+					super.initializeHeader();
+					bw.write("# BNX File Version:	1.2\n");
 					bw.write("# Label Channels:	1\n");
 					bw.write("# Nickase Recognition Site 1:\n");
+					bw.write("#rh	SourceFolder	InstrumentSerial	Time	NanoChannelPixelsPerScan	StretchFactor	BasesPerPixel	NumberofScans	ChipId	Flowcell	LabelSNRFilterType	MinMoleculeLength	MinLabelSNR	RunId\n");
+					bw.write("# Run Data	A/Detect Molecules	A001	1/1/2010 0:00:00 AM	00000000	1.00	500.00	30	10000,10000,1/1/2010,123456789	1	Static	0	3	1\n");
 					bw.write("# Quality Score QX01:	SNR\n");
 					bw.write("# Quality Score QX02:	Ave Intensity\n");
-					bw.write("# All above comments are fake\n");
-					bw.write("#0h	LabelChannel	MapID	Length\n");
-					bw.write("#0f	int	int	float\n");
+					bw.write("# All above comments are created for input in Irysview\n");
+					bw.write("#0h	LabelChannel	MoleculeId	Length	AvgIntensity	SNR	NumberofLabels	OriginalMoleculeId	ScanNumber	ScanDirection	ChipId	Flowcell	RunId	GlobalScanNumber\n");
+					bw.write("#0f	int	int	float	float	float	int	int	int	int	string	int	int	int\n");
 					bw.write("#1h	LabelChannel	LabelPositions[N]\n");
 					bw.write("#1f	int	float\n");
 					bw.write("#2h	LabelChannel	LabelPositions[N]\n");
@@ -118,14 +137,13 @@ public class OptMapDataWriter extends OMWriter<DataNode> {
 					bw.write("#Qf	str	float\n");
 					break;
 				case CMAP:
-					bw.write("# \n");
-					bw.write("# CompileDir= \n");
-					bw.write("# CMAP File Version:	0.1\n");
+					bw.write("# CMAP File Version:	0.2\n");
+					super.initializeHeader();
 					bw.write("# Label Channels:	1\n");
 					bw.write("# Nickase Recognition Site 1:	unknown\n");
-					bw.write("# Number of Consensus Nanomaps: 0\n");
-					bw.write("#h CMapId	ContigLength	NumSites	SiteID	LabelChannel	Position	StdDev	Coverage	Occurrence\n");
-					bw.write("#f int	float	int	int	int	float	float	int	int\n");
+					bw.write("# Number of Consensus Maps: 0\n");
+					bw.write("#h CMapId	ContigLength	NumSites	SiteID	LabelChannel	Position	StdDev	Coverage	Occurrence	ChimQuality	SegDupL	SegDupR	FragileL	FragileR	OutlierFrac	ChimNorm	GmeanSNR	lnSNRsd\n");
+					bw.write("#f int	float	int	int	int	float	float	float	float	float	float	float	float	float	float	float	float	float\n");
 					break;
 				case XML:
 					try {
@@ -254,20 +272,41 @@ public class OptMapDataWriter extends OMWriter<DataNode> {
 							data.length(), data.getTotalSegment(), s.toString()));
 					break;
 				case BNX:
-					bw.write("0\t");
-					bw.write(data.name);
-					bw.write("\t");
-					bw.write(Long.toString(data.length()));
-					bw.write(".0");
-					bw.write("\n");
-					bw.write("1");
-					for (int i = 0; i < data.refp.length; i++) {
-						bw.write("\t");
-						bw.write(Long.toString(data.refp[i]));
-						bw.write(".0");
+//					bw.write("0\t");
+//					bw.write(data.name);
+//					bw.write("\t");
+//					bw.write(Long.toString(data.length()));
+//					bw.write(".0");
+					bw.write("0");
+					bw.write("\t" + data.name);
+					bw.write("\t" + Long.toString(data.length()) + ".0");
+					if (data instanceof BnxDataNode) {
+						BnxDataNode bnxData = (BnxDataNode) data;
+
+						if (bnxData.hasScanNumber) {
+							bw.write("\t" + bnxData.avgIntensity);
+							bw.write("\t" + bnxData.moleculeSNR);
+							bw.write("\t" + bnxData.getTotalSignal());
+							bw.write("\t" + bnxData.originalMoleculeID);
+							bw.write("\t" + bnxData.scanNumber);
+							bw.write("\t" + bnxData.scanDirection);
+							bw.write("\t" + bnxData.chipID);
+							bw.write("\t" + bnxData.flowCell);
+						}
+						if (bnxData.hasGlobalScanNumber) {
+							bw.write("\t" + bnxData.runID);
+							bw.write("\t" + bnxData.globalScanNumber);
+						}
 					}
 					bw.write("\n");
-					bw.write("QX01"); // Default as 10.0
+					
+					bw.write("1");
+					for (int i = 0; i < data.refp.length; i++)
+						bw.write("\t" + data.refp[i] + ".0");
+					bw.write("\t" + data.length() + ".0");
+					bw.write("\n");
+					
+					bw.write("QX11"); // Default as 10.0
 					if (data instanceof BnxDataNode)
 						for (int i = 0; i < data.refp.length; i++)
 							bw.write("\t" + Double.toString(((BnxDataNode) data).snr[i]));
@@ -275,7 +314,7 @@ public class OptMapDataWriter extends OMWriter<DataNode> {
 						for (int i = 0; i < data.refp.length; i++)
 							bw.write("\t10.0");
 					bw.write("\n");
-					bw.write("QX02"); // Default as 0.05
+					bw.write("QX12"); // Default as 0.05
 					if (data instanceof BnxDataNode)
 						for (int i = 0; i < data.refp.length; i++)
 							bw.write("\t" + Double.toString(((BnxDataNode) data).intensity[i]));
@@ -302,7 +341,7 @@ public class OptMapDataWriter extends OMWriter<DataNode> {
 							labelchannel = 0;
 						} else
 							pos = data.refp[i];
-						bw.write(String.format("%s\t%d\t%d\t%d\t%d\t%d\t%.1f\t%d\t%d\n", id, size, totalsites, i + 1, labelchannel, pos, stddev, coverage, occurence));
+						bw.write(String.format("%s\t%.1f\t%d\t%d\t%d\t%.1f\t%.1f\t%.1f\t%.1f%s\n", id, (double) size, totalsites, i + 1, labelchannel, (double) pos, (double) stddev, (double) coverage, (double) occurence, "	0.00	0.00	0.00	0.00	0.00	0.00	0.00	0.0000	0.0000"));
 					}
 					break;
 				case XML:
@@ -366,15 +405,15 @@ public class OptMapDataWriter extends OMWriter<DataNode> {
 		}
 		super.close();
 	}
-	public static void writeAll(String filename, int fileformat, LinkedHashMap<String, DataNode> fragmentmap) throws IOException {
+	public static void writeAll(String filename, int fileformat, Map<String, DataNode> dataMap) throws IOException {
 		OptMapDataWriter omdw = new OptMapDataWriter(filename, fileformat);
-		omdw.writeAll(fragmentmap);
+		omdw.writeAll(dataMap);
 		omdw.close();
 	}
 
-	public static void writeAll(OptionSet options, LinkedHashMap<String, DataNode> fragmentmap) throws IOException {
+	public static void writeAll(OptionSet options, Map<String, DataNode> dataMap) throws IOException {
 		OptMapDataWriter omdw = new OptMapDataWriter(options);
-		omdw.writeAll(fragmentmap);
+		omdw.writeAll(dataMap);
 		omdw.close();
 	}
 

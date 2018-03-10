@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -370,10 +370,27 @@ public class OptMapDataReader extends OMReader<DataNode> {
 		String name = "";
 		long size = -1;
 
+		long[] refp = null;
 		double[] snr = null;
 		double[] intensity = null;
+		
+		// BNX version 1.0
+		double avgIntensity = -1;
+		double moleculeSNR = -1;
+		int numberOfLabels = -1;
+		int originalMoleculeID = -1;		
+		int scanNumber = -1;
+		int scanDirection = -1;
+		String chipID = "";
+		int flowCell = -1;
+		boolean hasScanNumber = false;
 
-		long[] refp = null;
+
+		// BNX version 1.2
+		int runID = -1;
+		int globalScanNumber = -1;		
+		boolean hasGlobalScanNumber = false;
+		
 		boolean gotNameSizeInfo = false;
 		boolean gotDetailInfo = false;
 		boolean gotSNRInfo = false;
@@ -381,15 +398,38 @@ public class OptMapDataReader extends OMReader<DataNode> {
 		do {
 
 			String s = this.nextline.trim();
-
 			String[] l = s.split("\t");
 			switch (l[0]) {
 				case "0":
 					name = l[1];
 					size = (long) Double.parseDouble(l[2]);
+					// v1.0
+					if (l.length >= 11) {
+						avgIntensity = Double.parseDouble(l[3]);
+						moleculeSNR = Double.parseDouble(l[4]);
+						numberOfLabels = Integer.parseInt(l[5]);
+						originalMoleculeID = Integer.parseInt(l[6]);
+						scanNumber = Integer.parseInt(l[7]);
+						scanDirection = Integer.parseInt(l[8]);
+						chipID = l[9];
+						flowCell = Integer.parseInt(l[10]);
+						hasScanNumber = true;
+						hasGlobalScanNumber = false;
+					}
+					// v1.2
+					if (l.length == 13) {
+						runID = Integer.parseInt(l[11]);
+						globalScanNumber = Integer.parseInt(l[12]);
+						hasScanNumber = true;
+						hasGlobalScanNumber = true;
+					}
 					gotNameSizeInfo = true;
 					break;
 				case "1":
+					if (hasScanNumber)
+						if (l.length - 2 != numberOfLabels)
+							System.err.println("Warning: Inconsistent number of labels for \"" + name + "\"");
+					
 					refp = new long[l.length - 2]; // last element should be the size of molecule
 					for (int i = 1; i < l.length - 1; i++)
 						refp[i - 1] = (long) Double.parseDouble(l[i]);
@@ -397,6 +437,8 @@ public class OptMapDataReader extends OMReader<DataNode> {
 					break;
 				case "QX01":
 				case "QX11":
+					if (l.length - 1 != refp.length)
+						System.err.println("Warning: Inconsistent number of labels and snr for \"" + name + "\"");
 					snr = new double[l.length - 1];
 					for (int i = 1; i < l.length; i++)
 						snr[i - 1] = Double.parseDouble(l[i]);
@@ -404,6 +446,8 @@ public class OptMapDataReader extends OMReader<DataNode> {
 					break;
 				case "QX02":
 				case "QX12":
+					if (l.length - 1 != refp.length)
+						System.err.println("Warning: Inconsistent number of labels and intensity for \"" + name + "\"");
 					intensity = new double[l.length - 1];
 					for (int i = 1; i < l.length; i++)
 						intensity[i - 1] = Double.parseDouble(l[i]);
@@ -416,6 +460,7 @@ public class OptMapDataReader extends OMReader<DataNode> {
 		} while ((this.nextline != null)
 				&& (this.nextline.startsWith("1") || this.nextline.startsWith("QX")));
 		if (gotNameSizeInfo && gotDetailInfo && gotSNRInfo && gotIntensityInfo) {
+			// bnx version 1.0 or above
 			List<Long> refpList = new ArrayList<>();
 			List<Double> snrList = new ArrayList<>();
 			List<Double> intensityList = new ArrayList<>();
@@ -428,12 +473,24 @@ public class OptMapDataReader extends OMReader<DataNode> {
 			refp = ArrayUtils.toPrimitive(refpList.toArray(new Long[refpList.size()]));
 			snr = ArrayUtils.toPrimitive(snrList.toArray(new Double[snrList.size()]));
 			intensity = ArrayUtils.toPrimitive(intensityList.toArray(new Double[intensityList.size()]));
-			BnxDataNode data = new BnxDataNode(name, size, refp, intensity, snr);
+			BnxDataNode data;			
+			if (hasGlobalScanNumber)
+				data = new BnxDataNode(name, size, refp, snr, intensity, avgIntensity, moleculeSNR, originalMoleculeID, scanNumber, scanDirection, chipID, flowCell, runID, globalScanNumber);
+			else
+				if (hasScanNumber)
+					data = new BnxDataNode(name, size, refp, snr, intensity, avgIntensity, moleculeSNR, originalMoleculeID, scanNumber, scanDirection, chipID, flowCell);
+				else
+					data = new BnxDataNode(name, size, refp, snr, intensity);
 			return data;
-		} else {
-			System.err.println("Warning: incomplete record is found.");
-			return null;
-		}
+		} else 
+			if (gotNameSizeInfo && gotDetailInfo) {
+				// Old bnx version
+				DataNode data = new DataNode(name, size, refp);
+				return data;
+			} else {
+				System.err.println("Warning: incomplete record is found.");
+				return null;
+			}
 	}
 
 	private DataNode parseCMAP() throws IOException {

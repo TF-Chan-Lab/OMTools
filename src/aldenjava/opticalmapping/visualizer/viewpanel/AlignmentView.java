@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -41,6 +41,7 @@ import aldenjava.opticalmapping.GenomicPosNode;
 import aldenjava.opticalmapping.data.mappingresult.OptMapResultNode;
 import aldenjava.opticalmapping.visualizer.OMView;
 import aldenjava.opticalmapping.visualizer.VDataType;
+import aldenjava.opticalmapping.visualizer.ViewSetting;
 import aldenjava.opticalmapping.visualizer.vobject.VAlignment;
 
 public class AlignmentView extends ViewPanel {
@@ -132,8 +133,7 @@ public AlignmentView(OMView mainView) {
 		List<VAlignment> valignList = new ArrayList<VAlignment>();
 		for (List<OptMapResultNode> resultlist : resultlistlist)
 		{
-			boolean debugSeparateAlignment = false;
-			if (debugSeparateAlignment)
+			if (ViewSetting.separateAlignmentDisplay)
 				for (OptMapResultNode r : resultlist)
 				{
 					List<OptMapResultNode> tmpList = new ArrayList<OptMapResultNode>();
@@ -150,8 +150,8 @@ public AlignmentView(OMView mainView) {
 		for (VAlignment valign : valignList)
 			this.add(valign);
 		this.valignList = valignList; 
-		this.autoSetSize();
-		this.reorganize();
+		this.setRatio(ratio);
+		this.setDNARatio(dnaRatio);
 	}
 	@Override
 	public void setAnchorPoint(GenomicPosNode anchorPoint) throws UnsupportedOperationException {

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -29,12 +29,17 @@
 
 package aldenjava.opticalmapping.data;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.Closeable;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
+
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * @author Alden
@@ -52,7 +57,17 @@ public abstract class OMWriter<T> implements Closeable{
 	}	
 
 	public OMWriter(String filename, boolean autoInitializeHeader) throws IOException {
-		bw = new BufferedWriter(new FileWriter(filename));
+		OutputStream stream = new BufferedOutputStream(new FileOutputStream(filename));
+		String extension = FilenameUtils.getExtension(filename).toLowerCase();
+		if (CompressionFormat.isValidFormat(extension)) {
+			CompressionFormat cformat = CompressionFormat.lookupfileext(extension);
+			switch (cformat) {
+				case GZIP:
+					stream = new GZIPOutputStream(stream);
+					break;
+			}
+		}
+		bw = new BufferedWriter(new OutputStreamWriter(stream));
 		if (autoInitializeHeader)
 			initializeHeader();
 	}
@@ -66,19 +81,19 @@ public abstract class OMWriter<T> implements Closeable{
 		// Plan B: Use an abstract method returning boolean to check if a subclass support
 	}
 	public abstract void write(T t) throws IOException;
-			
-	public void writeAll(List<T> tList) throws IOException
-	{
-		if (tList == null)
-			throw new NullPointerException("tList");
-		for (T t : tList)
+
+	public void writeAll(Iterable<T> iterable) throws IOException {
+		if (iterable == null)
+			throw new NullPointerException("Cannot write null iterable");
+		for (T t : iterable)
 			write(t);
 	}
-	public void writeAll(LinkedHashMap<?, T> tMap) throws IOException
+	public void writeAll(Map<?, T> tMap) throws IOException
 	{
 		for (T t : tMap.values())
 			write(t);
 	}
+	
 	@Override
 	public void close() throws IOException
 	{

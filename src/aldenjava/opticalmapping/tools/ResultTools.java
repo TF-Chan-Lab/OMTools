@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -86,6 +86,8 @@ public class ResultTools{
 
 		// tools option
 		parser.addHeader("Result Tools Options", 1);
+		parser.accepts("qprefix","Add prefix to query name.").withRequiredArg().ofType(String.class);
+		parser.accepts("rprefix","Add prefix to reference name.").withRequiredArg().ofType(String.class);
 		parser.accepts("disinvalid","Discard invalid results.").withRequiredArg().ofType(Boolean.class).defaultsTo(true);
 		parser.accepts("conf","Recalculating result confidence").withRequiredArg().ofType(Boolean.class).defaultsTo(false);
 		OptionSpec<String> odataid = parser.accepts("dataid", "List of Data ID to be extracted").withRequiredArg().ofType(String.class);
@@ -140,6 +142,12 @@ public class ResultTools{
 			else
 				System.err.println("Invalid reference modification file");
 		}
+		String qprefix = null;
+		if (options.has("qprefix")) 
+			qprefix = (String) options.valueOf("qprefix");
+		String rprefix = null;
+		if (options.has("rprefix")) 
+			rprefix = (String) options.valueOf("rprefix");
 				
 		boolean conf = (Boolean) options.valueOf("conf");
 		boolean disinvalid = (Boolean) options.valueOf("disinvalid");
@@ -394,10 +402,17 @@ public class ResultTools{
 					}
 				}
 			
+			if (qprefix != null) {
+				if (!resultlist.isEmpty())
+					fragment.name = qprefix + fragment.name;
+			}
+			if (rprefix != null)
+				if (!resultlist.isEmpty())
+					for (OptMapResultNode result : resultlist)
+						result.mappedRegion = new GenomicPosNode(rprefix + result.mappedRegion.ref, result.mappedRegion.start, result.mappedRegion.stop);
+			
 			if (resultlist.isEmpty())
 				resultlist.add(new OptMapResultNode(OptMapResultNode.newBlankMapNode(fragment)));
-//			if (!resultlist.get(0).isUsed())
-//				System.out.printf("%s\t%.4f\n", resultlist.get(0).parentFrag.id, 0.0);
 
 			if (omrw != null)
 				omrw.write(resultlist);
@@ -415,7 +430,6 @@ public class ResultTools{
 						omrw_unmap.write(fragment);
 					if (omrw != null)
 						omrw.write(new OptMapResultNode(OptMapResultNode.newBlankMapNode(fragment)));
-//					System.out.printf("%s\t%.4f\n", fragment.id, 0.0);
 				}
 			
 		omrr.close();

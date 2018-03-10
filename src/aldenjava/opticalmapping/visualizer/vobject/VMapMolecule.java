@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -54,7 +54,6 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 	private String id;
 	private boolean isInvertedMolecule;
 	
-	boolean useColor = false;
 	public VMapMolecule(DataNode ref, List<OptMapResultNode> resultlist) throws InvalidVObjectException {
 		super();
 		this.id = resultlist.get(0).parentFrag.name;
@@ -87,355 +86,140 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 				if (laststrand != result.mappedstrand)
 					inverted = true;
 			laststrand = result.mappedstrand;
-			// Remove the scaling and reverse now
-						
-			
-			useColor = true;
-			/*
-			if (useColor) {
-				OptMapResultNode oriResult = result;
-				result = VUtils.modifyAllReverse(result);
-				result = VUtils.scaleIndividualFragment(result, ref);
-				assert(result.mappedstrand == 1);
-				DataNode data = oriResult.parentFrag;
-				
-				// Construct VMolecule using the modified molecule
-				VMolecule mapMole = new VMolecule(result.parentFrag);
-				mapMole.setStartEndPoint(result.parentFrag.getGenomicPos(result.subfragstart, result.subfragstop, true).getLoc());
-				mapMole.setBaseColor(Color.YELLOW);
 
+			VMolecule mapMole;
+			mapMole = new VMolecule(result.parentFrag);
+			mapMole.setStartEndPoint(result.parentFrag.getGenomicPos(result.subfragstart, result.subfragstop, true).getLoc());
+			mapMole.setScale(1 / result.getMapScale());
+			mapMole.setBaseColor(Color.YELLOW);
+			mapMole.setReverse(result.mappedstrand == -1);
+			
+			if (ViewSetting.useVariableColor) {
+				// Set up regional color according to the difference in segment length 
 				int[] mapSignals = result.getMapSignal();
 				int[] mapRefSignals = result.getRefMapSignal();
 				for (int i = 1; i < mapSignals.length; i++) {
-					long moleSize = data.getSignalLength(mapSignals[i - 1], mapSignals[i]);
+					// range of scale: 0.5 to 1.5
+					
+					long querySize = result.mappedstrand==1?result.parentFrag.getSignalLength(mapSignals[i - 1], mapSignals[i]):result.parentFrag.getSignalLength(mapSignals[i], mapSignals[i - 1]);
 					long refSize = ref.getSignalLength(mapRefSignals[i - 1], mapRefSignals[i]);
-					Color color;
-					int meas = 500;
-					float maxScale = 0.5f;
-					float scale;
-//					if (Math.abs(moleSize - refSize) <= meas) 
-//						color = new Color(0,255,0);
-//					else
-						if (moleSize > refSize) {
-//							moleSize -= 500;
-							scale = moleSize / (float) refSize - 1;
-							if (scale > maxScale)
-								scale = maxScale;
-							float r = (scale > maxScale / 2) ? 1 : (scale) / (maxScale / 2);
-//							float g = (scale > maxScale / 2) ? (1 - ((scale - maxScale / 2) / (maxScale / 2))) : 1;
-							float g = 0;
-							float b = 0;
-							color = new Color(r, g, b);
-							r = 1 - r;
-							g = 1 - g;
-							b = 1 - b;
-							color = new Color(r, g, b);
 
-						}
-						else {
-//							moleSize += 500;
-							scale = refSize / (float) moleSize - 1;
-							if (scale > maxScale)
-								scale = maxScale;
-							float r = 0;
-//							float g = (scale > maxScale / 2) ? (1 - ((scale - maxScale / 2) / (maxScale / 2))) : 1;
-							float g = 0;
-							float b = (scale > maxScale / 2) ? 1 : (scale) / (maxScale / 2);
-							color = new Color(r, g, b);
-							r = 1 - r;
-							g = 1 - g;
-							b = 1 - b;
-							color = new Color(r, g, b);
-
-						}
-						
-					mapMole.addRegionColor(new SimpleLongLocation(ref.refp[mapRefSignals[i - 1]], ref.refp[mapRefSignals[i]]), color);
-				}
-				mapMole.addSignalColor(mapSignals, Color.MAGENTA);
-				
-				
-				if (inverted)
-					lastsubfragstop = result.parentFrag.getTotalSegment() - 1 - lastsubfragstop;
-				int unmapstart = -1;
-				int unmapstop = -1;
-				if (lastResult == null)
-				{
-					if (oriResult.mappedstrand == 1)
-					{
-						unmapstart = 0;
-						unmapstop = oriResult.subfragstart - 1;
-					}
+					// Determine the scaling factor of the individual segment
+					double scale;
+					if (querySize < refSize)
+						scale = querySize / (double) refSize;
 					else
-					{
-						unmapstart = oriResult.subfragstart + 1;
-						unmapstop = oriResult.parentFrag.getTotalSegment() - 1;
-					}
-				}
-				else
-					if (lastResult.mappedstrand == 1)
-						if (oriResult.mappedstrand == 1)
-						{
-							unmapstart = lastResult.subfragstop + 1;
-							unmapstop = oriResult.subfragstart - 1;
-						}
+						if (refSize < querySize)
+							scale = 2 - refSize / (double) querySize;
 						else
-						{
-							unmapstart = lastResult.subfragstop + 1;
-							unmapstop = oriResult.subfragstop - 1;
-						}
-					else
-						if (oriResult.mappedstrand == 1)
-						{
-							unmapstart = lastResult.subfragstart + 1;
-							unmapstop = oriResult.subfragstart - 1;
-						}
-						else
-						{
-							unmapstart = oriResult.subfragstart + 1;
-							unmapstop = lastResult.subfragstop - 1;
-						}
-				
-				VMolecule unmapMole = null;
-				if (unmapstop >= unmapstart) // some mappers may align the last segment of a molecule
-				{
-//					DataNode unmapPart = oriResult.parentFrag.subRefNode(unmapstart, unmapstop, true);
-//					System.out.println("K " + unmapPart.toString());
-//					System.out.println(unmapPart.length());
-//					if (oriResult.mappedstrand == -1)
-//						unmapPart.reverse();
-					unmapMole = new VMolecule(result.parentFrag);
-					long unmapstartloc = unmapstart==0?1:result.parentFrag.refp[unmapstart - 1];
-					long unmapstoploc = unmapstop==result.parentFrag.getTotalSignal()?result.parentFrag.length():result.parentFrag.refp[unmapstop];;
+							scale = 1;
 					
-					unmapMole.setStartEndPoint(new SimpleLongLocation(unmapstartloc, unmapstoploc));
-					unmapMole.setReverse(result.mappedstrand == -1);
-//					unmapPart = result.parentFrag.subRefNode(unmapstart, unmapstop, true);
+					// Add the boundary
+					if (scale < 0.5) scale = 0.5;
+					if (scale > 1.5) scale = 1.5;
+					
+					// compute the rgb
+					float r = (float) (scale - 0.5) * 2;
+					float g = (float) (1 - (scale - 0.5)) * 2;
+					float b = 0;
+					if (r >= 1) r = 1;
+					if (g >= 1) g = 1;
 
-	//				FragmentNode unmapPart = result.parentFrag.subFragmentNode(lastsubfragstop + 1, result.subfragstart - 1, true);
-	//				VMolecule unmapMole = new VMolecule(unmapPart, null, Color.GREEN);
-//					VMolecule unmapMole = new VMolecule(unmapPart);
+					Color color = new Color(r, g, b);
+					mapMole.addRegionColor(result.mappedstrand==1?new SimpleLongLocation(result.parentFrag.refp[mapSignals[i - 1]], result.parentFrag.refp[mapSignals[i]]):new SimpleLongLocation(result.parentFrag.refp[mapSignals[i]], result.parentFrag.refp[mapSignals[i - 1]]), color);
 					
-					if (lastResult != null)
-					{
-						VSpace space;
-						if (inverted)
-							space = new VInversion(result.mappedRegion.start - lastmappedstop + 1, unmapMole.getDNALength());
-						else
-							space = new VIndel(result.mappedRegion.start - lastmappedstop + 1, (long) (unmapMole.getDNALength() / ((lastResult.getMapScale() + oriResult.getMapScale()) / 2)));
-						moleculelist.add(space);
-						VSpace unalignedSpace = new VSpace(accumulateUnalignedSpace, accumulateUnalignedSpace);
-						unalignedMoleculeList.add(unalignedSpace);
-						accumulateUnalignedSpace = space.getDNALength() - unmapMole.getDNALength();
-					}
-					accumulateUnalignedSpace += mapMole.getDNALength();
-					unalignedMoleculeList.add(unmapMole);
 				}
+				// Temporarily added
+				if (OMView.dataColorMap.containsKey(result.parentFrag.name)) {
+					for (int i = 0; i < result.parentFrag.getTotalSegment(); i++)	
+						if (OMView.dataColorMap.get(result.parentFrag.name).contains(i))
+							mapMole.addRegionColor(new SimpleLongLocation(result.parentFrag.refp[i - 1], result.parentFrag.refp[i]), Color.BLUE);
+				}
+
+			}
 			
-				moleculelist.add(mapMole);
-				
 
-			}*/
-			if (true) {
-				// Original
-//				VMolecule mapMole = new VMolecule(result.parentFrag);
-//				mapMole.setStartEndPoint(result.parentFrag.getGenomicPos(result.subfragstart, result.subfragstop, true).getLoc());
-//				mapMole.setBaseColor(Color.YELLOW);
-//				mapMole.setReverse(result.mappedstrand == -1);
-
-				VMolecule mapMole;
-				if (!useColor) { // Standard scaling
-					mapMole = new VMolecule(result.parentFrag);
-					mapMole.setStartEndPoint(result.parentFrag.getGenomicPos(result.subfragstart, result.subfragstop, true).getLoc());
-					mapMole.setScale(1 / result.getMapScale());
-					mapMole.setBaseColor(Color.YELLOW);
-					mapMole.setReverse(result.mappedstrand == -1);
+			// Set up color for mapped signals
+			int[] mapSignals = result.getMapSignal();
+			mapMole.addSignalColor(mapSignals, ViewSetting.regionalViewAlignedSignalColor);
+			
+			// Determine the unmapped start and stop position
+			if (inverted)
+				lastsubfragstop = result.parentFrag.getTotalSegment() - 1 - lastsubfragstop;
+			int unmapstart = -1;
+			int unmapstop = -1;
+			if (lastResult == null) {
+				if (result.mappedstrand == 1) {
+					unmapstart = 0;
+					unmapstop = result.subfragstart - 1;
 				}
 				else {
-					// Create a new DataNode by scaling the respective segments
-					DataNode d = VUtils.scaleIndividualFragment(result, ref);
-					mapMole = new VMolecule(d);
-					mapMole.setStartEndPoint(d.getGenomicPos(result.subfragstart, result.subfragstop, true).getLoc());
-					mapMole.setBaseColor(Color.YELLOW);
-					mapMole.setReverse(result.mappedstrand == -1);	
-					// Set up regional color according to the length
-					int[] mapSignals = result.getMapSignal();
-					int[] mapRefSignals = result.getRefMapSignal();
-					for (int i = 1; i < mapSignals.length; i++) {
-						// range of scale: 0.5 to 2
-						
-						long querySize = result.mappedstrand==1?result.parentFrag.getSignalLength(mapSignals[i - 1], mapSignals[i]):result.parentFrag.getSignalLength(mapSignals[i], mapSignals[i - 1]);
-						long refSize = ref.getSignalLength(mapRefSignals[i - 1], mapRefSignals[i]);
-						// Determine the scaling factor of the individual segment
-						double scale;
-						if (querySize < refSize)
-							scale = querySize / (double) refSize;
-						else
-							if (refSize < querySize)
-								scale = 2 - refSize / (double) querySize;
-							else
-								scale = 1;
-						// Add the boundary
-						if (scale < 0.5) scale = 0.5;
-						if (scale > 1.5) scale = 1.5;
-						
-						// compute the rgb
-						float r = (float) (scale - 0.5) * 2;
-						float g = (float) (1 - (scale - 0.5)) * 2;
-						float b = 0;
-						if (r >= 1) r = 1;
-						if (g >= 1) g = 1;
-
-						Color color = new Color(r, g, b);
-						mapMole.addRegionColor(result.mappedstrand==1?new SimpleLongLocation(d.refp[mapSignals[i - 1]], d.refp[mapSignals[i]]):new SimpleLongLocation(d.refp[mapSignals[i]], d.refp[mapSignals[i - 1]]), color);
-
-//						Color color;
-						
-//						int meas = 500;
-//						float maxScale = 0.5f;
-//						float scale;
-//						if (Math.abs(moleSize - refSize) <= meas) 
-//							color = new Color(0,255,0);
-//						else
-//							if (moleSize > refSize) {
-//								moleSize -= 500;
-//								scale = moleSize / (float) refSize - 1;
-//								if (scale > maxScale)
-//									scale = maxScale;
-//								float r = (scale > maxScale / 2) ? 1 : (scale) / (maxScale / 2);
-//								float g = (scale > maxScale / 2) ? (1 - ((scale - maxScale / 2) / (maxScale / 2))) : 1;
-//								float g = 0;
-//								float b = 0;
-//								color = new Color(r, g, b);
-//								r = 1 - r;
-//								g = 1 - g;
-//								b = 1 - b;
-//								color = new Color(r, g, b);
-
-//							}
-//							else {
-//								moleSize += 500;
-//								scale = refSize / (float) moleSize - 1;
-//								if (scale > maxScale)
-//									scale = maxScale;
-//								float r = 0;
-////								float g = (scale > maxScale / 2) ? (1 - ((scale - maxScale / 2) / (maxScale / 2))) : 1;
-//								float g = 0;
-//								float b = (scale > maxScale / 2) ? 1 : (scale) / (maxScale / 2);
-//								color = new Color(r, g, b);
-//								r = 1 - r;
-//								g = 1 - g;
-//								b = 1 - b;
-//								color = new Color(r, g, b);
-//
-//							}
-							
-						
-					}
-					// Temporarily added
-					if (OMView.dataColorMap.containsKey(result.parentFrag.name)) {
-						for (int i = 0; i < d.getTotalSegment(); i++)	
-							if (OMView.dataColorMap.get(d.name).contains(i))
-								mapMole.addRegionColor(new SimpleLongLocation(d.refp[i - 1], d.refp[i]), Color.BLUE);
-					}
-
+					unmapstart = result.subfragstart + 1;
+					unmapstop = result.parentFrag.getTotalSegment() - 1;
 				}
-				
-
-				// Set up color for mapped signals
-				int[] mapSignals = result.getMapSignal();
-				mapMole.addSignalColor(mapSignals, ViewSetting.regionalViewAlignedSignalColor);
-				
-				// Determine the unmapped start and stop position
-				if (inverted)
-					lastsubfragstop = result.parentFrag.getTotalSegment() - 1 - lastsubfragstop;
-				int unmapstart = -1;
-				int unmapstop = -1;
-				if (lastResult == null) {
+			}
+			else
+				if (lastResult.mappedstrand == 1)
 					if (result.mappedstrand == 1) {
-						unmapstart = 0;
+						unmapstart = lastResult.subfragstop + 1;
+						unmapstop = result.subfragstart - 1;
+					}
+					else {
+						unmapstart = lastResult.subfragstop + 1;
+						unmapstop = result.subfragstop - 1;
+					}
+				else
+					if (result.mappedstrand == 1) {
+						unmapstart = lastResult.subfragstart + 1;
 						unmapstop = result.subfragstart - 1;
 					}
 					else {
 						unmapstart = result.subfragstart + 1;
-						unmapstop = result.parentFrag.getTotalSegment() - 1;
+						unmapstop = lastResult.subfragstop - 1;
 					}
+			
+			
+			VMolecule unmapMole = null;
+			long unmappedLen = 0;
+			if (!inverted && unmapstart <= unmapstop) {
+				unmapMole = new VMolecule(result.parentFrag);
+				long unmapstartloc = unmapstart==0?1:result.parentFrag.refp[unmapstart - 1];
+				long unmapstoploc = unmapstop==result.parentFrag.getTotalSignal()?result.parentFrag.length():result.parentFrag.refp[unmapstop];;
+				
+				unmapMole.setStartEndPoint(new SimpleLongLocation(unmapstartloc, unmapstoploc));
+				unmapMole.setReverse(result.mappedstrand == -1);
+				unmappedLen = unmapstoploc - unmapstartloc + 1; // + 1 here?
+				// Temporarily added
+				if (OMView.dataColorMap.containsKey(result.parentFrag.name)) {
+					for (int i = 0; i < result.parentFrag.getTotalSegment(); i++)	
+						if (OMView.dataColorMap.get(result.parentFrag.name).contains(i))
+							unmapMole.addRegionColor(new SimpleLongLocation(i==0?1:result.parentFrag.refp[i - 1], i==result.parentFrag.getTotalSegment()-1?result.parentFrag.size:result.parentFrag.refp[i]), Color.BLUE);
 				}
-				else
-					if (lastResult.mappedstrand == 1)
-						if (result.mappedstrand == 1) {
-							unmapstart = lastResult.subfragstop + 1;
-							unmapstop = result.subfragstart - 1;
-						}
-						else {
-							unmapstart = lastResult.subfragstop + 1;
-							unmapstop = result.subfragstop - 1;
-						}
-					else
-						if (result.mappedstrand == 1) {
-							unmapstart = lastResult.subfragstart + 1;
-							unmapstop = result.subfragstart - 1;
-						}
-						else {
-							unmapstart = result.subfragstart + 1;
-							unmapstop = lastResult.subfragstop - 1;
-						}
-				
-				
-				// Create a
-//				DataNode unmapPart = new DataNode(result.parentFrag.name, 0);
-//				if (unmapstop >= unmapstart) // some mappers may align the last segment of a molecule
-//				{
-//					unmapPart = oriResult.parentFrag.subRefNode(unmapstart, unmapstop, true);
-//					if (oriResult.mappedstrand == -1)
-//						unmapPart.reverse();
-//				}
-//				if (!inverted && unmapstart <= unmapstop)
-//					unmapPart = oriResult.parentFrag.subRefNode(unmapstart, unmapstop, true);
-				VMolecule unmapMole = null;
-				long unmappedLen = 0;
-				if (!inverted && unmapstart <= unmapstop) {
-					unmapMole = new VMolecule(result.parentFrag);
-//					System.out.println(unmapstart);
-//					System.out.println(unmapstop);
-					long unmapstartloc = unmapstart==0?1:result.parentFrag.refp[unmapstart - 1];
-					long unmapstoploc = unmapstop==result.parentFrag.getTotalSignal()?result.parentFrag.length():result.parentFrag.refp[unmapstop];;
-					
-					unmapMole.setStartEndPoint(new SimpleLongLocation(unmapstartloc, unmapstoploc));
-					unmapMole.setReverse(result.mappedstrand == -1);
-					unmappedLen = unmapstoploc - unmapstartloc + 1; // + 1 here?
-//					unmapPart = result.parentFrag.subRefNode(unmapstart, unmapstop, true);
-					// Temporarily added
-					if (OMView.dataColorMap.containsKey(result.parentFrag.name)) {
-						for (int i = 0; i < result.parentFrag.getTotalSegment(); i++)	
-							if (OMView.dataColorMap.get(result.parentFrag.name).contains(i))
-								unmapMole.addRegionColor(new SimpleLongLocation(i==0?1:result.parentFrag.refp[i - 1], i==result.parentFrag.getTotalSegment()-1?result.parentFrag.size:result.parentFrag.refp[i]), Color.BLUE);
-					}
 
-					
-				}
 				
-				if (lastResult != null)
-				{
-					VSpace space;
-					if (inverted)
-						space = new VInversion(result.mappedRegion.start - lastmappedstop + 1, unmappedLen);
-					else
-//						space = new VIndel(result.mappedRegion.start - lastmappedstop + 1, (long) (unmapPart.length() / ((lastResult.getMapScale() + oriResult.getMapScale()) / 2)));
-						space = new VIndel(result.mappedRegion.start - lastmappedstop + 1, unmappedLen);
-					moleculelist.add(space);
-					VSpace unalignedSpace = new VSpace(accumulateUnalignedSpace, accumulateUnalignedSpace);
-					unalignedMoleculeList.add(unalignedSpace);
-					accumulateUnalignedSpace = space.getDNALength();
-					if (unmapMole != null)
-						accumulateUnalignedSpace -= unmapMole.getDNALength();
-				}
-				accumulateUnalignedSpace += mapMole.getDNALength();
-				if (unmapMole != null)
-					unalignedMoleculeList.add(unmapMole);
-				
-
-				moleculelist.add(mapMole);
 			}
+			
+			if (lastResult != null)
+			{
+				VSpace space;
+				if (inverted)
+					space = new VInversion(result.mappedRegion.start - lastmappedstop + 1, unmappedLen);
+				else
+//						space = new VIndel(result.mappedRegion.start - lastmappedstop + 1, (long) (unmapPart.length() / ((lastResult.getMapScale() + oriResult.getMapScale()) / 2)));
+					space = new VIndel(result.mappedRegion.start - lastmappedstop + 1, unmappedLen);
+				moleculelist.add(space);
+				VSpace unalignedSpace = new VSpace(accumulateUnalignedSpace, accumulateUnalignedSpace);
+				unalignedMoleculeList.add(unalignedSpace);
+				accumulateUnalignedSpace = space.getDNALength();
+				if (unmapMole != null)
+					accumulateUnalignedSpace -= unmapMole.getDNALength();
+			}
+			accumulateUnalignedSpace += mapMole.getDNALength();
+			if (unmapMole != null)
+				unalignedMoleculeList.add(unmapMole);
+			
+
+			moleculelist.add(mapMole);
 						
 			
 			lastsubfragstop = result.subfragstop;
@@ -445,8 +229,6 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 			modifiedresultlist.add(new OptMapResultNode(result));
 		}
 		OptMapResultNode finalResult = newresultlist.get(newresultlist.size() - 1);
-//		OptMapResultNode oriLastResult = finalResult;
-//		finalResult = VUtils.modifyResult(finalResult);
 		int unmapstart = -1;
 		int unmapstop = -1;
 		if (finalResult.mappedstrand == 1)
@@ -463,11 +245,6 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 //		if (oriLastResult.subfragstop + 1 <= oriLastResult.getTotalSegment() - 1) // some mappers may align the last segment of a molecule
 		if (finalResult.subfragstop + 1 <= finalResult.getTotalSegment() - 1)
 		{
-//			DataNode finalUnmapPart = oriLastResult.parentFrag.subRefNode(unmapstart, unmapstop, true);
-//			if (finalResult.mappedstrand == -1)
-//				finalUnmapPart.reverse();
-//			FragmentNode finalUnmapPart = finalResult.parentFrag.subFragmentNode(finalResult.subfragstop + 1, finalResult.getTotalSegment() - 1, true);
-//			VMolecule finalUnmapMole = new VMolecule(finalUnmapPart, null, Color.GREEN);
 			VMolecule finalUnmapMole = new VMolecule(finalResult.parentFrag);
 			finalUnmapMole.setStartEndPoint(finalResult.parentFrag.getGenomicPos(unmapstart, unmapstop, true).getLoc());
 			finalUnmapMole.setReverse(finalResult.mappedstrand == -1);
@@ -518,7 +295,6 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 		}
 
 		this.validate();
-//		this.setUnalignedPortionVisible(false);
 		this.autoSetSize();
 	}
 	
@@ -857,3 +633,4 @@ public class VMapMolecule extends VObject implements Comparable<VMapMolecule>{
 	}
 
 }
+

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -58,9 +58,10 @@ public class OMBlastCore {
 	private int maxnosignalregion;
 	private int maxSeedNumber;
 	private boolean allowEqualRefQuery;
+	private boolean allowDiffRefQuery;
 
 	public OMBlastCore(LinkedHashMap<String, DataNode> optrefmap, SeedExtension seedextensionmodule, SeedDatabase seeddatabase, int measure, double ear, int kmerlen,
-			int maxnosignalregion, int maxSeedNumber, boolean allowEqualRefQuery) {
+			int maxnosignalregion, int maxSeedNumber, boolean allowEqualRefQuery, boolean allowDiffRefQuery) {
 		this.optrefmap = optrefmap;
 		this.seedextensionmodule = seedextensionmodule;
 		this.seeddatabase = seeddatabase;
@@ -70,6 +71,7 @@ public class OMBlastCore {
 		this.maxnosignalregion = maxnosignalregion;
 		this.maxSeedNumber = maxSeedNumber;
 		this.allowEqualRefQuery = allowEqualRefQuery;
+		this.allowDiffRefQuery = allowDiffRefQuery;
 	}
 
 	public OMBlastCore(LinkedHashMap<String, DataNode> optrefmap) {
@@ -77,7 +79,7 @@ public class OMBlastCore {
 	}
 
 	public void setParameters(int seedingmode, int kmerlen, int maxnosignalregion, boolean allowLocalAlignment, int measure, double ear, int matchscore, int falseppenalty, int falsenpenalty,
-			int falselimit, int maxSeedNumber, boolean allowEqualRefQuery) {
+			int falselimit, int maxSeedNumber, boolean allowEqualRefQuery, boolean allowDiffRefQuery) {
 		this.kmerlen = kmerlen;
 		this.maxnosignalregion = maxnosignalregion;
 		this.measure = measure;
@@ -90,6 +92,7 @@ public class OMBlastCore {
 		this.seedextensionmodule = new SeedExtension(optrefmap);
 		this.seedextensionmodule.setParameters(measure, ear, matchscore, falseppenalty, falsenpenalty, falselimit, allowLocalAlignment);
 		this.allowEqualRefQuery = allowEqualRefQuery;
+		this.allowDiffRefQuery = allowDiffRefQuery;
 	}
 
 	/**
@@ -131,6 +134,8 @@ public class OMBlastCore {
 		for (Seed seed : pooledseedlist) {
 			if (!allowEqualRefQuery && seed.source.equals(seed.kmerpointer.source))
 				continue;
+			if (!allowDiffRefQuery && !seed.source.equals(seed.kmerpointer.source)) // The implementation here isn't good. Should build a database for its own
+				continue;
 			ExtensionResult tmpresult = seedextensionmodule.extension(data, seed);
 			if (tmpresult != null)
 				extensionresultlist.add(tmpresult);
@@ -171,6 +176,6 @@ public class OMBlastCore {
 	 * @return a copy of this instance
 	 */
 	public OMBlastCore copy() {
-		return new OMBlastCore(optrefmap, seedextensionmodule.copy(), seeddatabase.copy(), measure, ear, kmerlen, maxnosignalregion, maxSeedNumber, allowEqualRefQuery);
+		return new OMBlastCore(optrefmap, seedextensionmodule.copy(), seeddatabase.copy(), measure, ear, kmerlen, maxnosignalregion, maxSeedNumber, allowEqualRefQuery, allowDiffRefQuery);
 	}
 }

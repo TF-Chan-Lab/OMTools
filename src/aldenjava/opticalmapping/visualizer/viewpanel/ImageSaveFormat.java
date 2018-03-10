@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -37,58 +37,64 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 
 import aldenjava.opticalmapping.data.DataFormat;
+import aldenjava.opticalmapping.miscellaneous.InvalidFileFormatException;
 
 public enum ImageSaveFormat {
-	SVG (0, "Scalable Vector Graphics (SVG)", "svg"), 
+	SVG (0, "Scalable Vector Graphics (SVG)", "svg"),
 	PNG (1, "Portable Network Graphics (PNG)", "png"),
 	JPG (2, "JPEG / JPG", "jpg");
 	private final int format;
 	private final String description;
 	private final String extension;
-	ImageSaveFormat(int format, String description, String extension)
-	{
+
+	ImageSaveFormat(int format, String description, String extension) {
 		this.format = format;
 		this.description = description;
 		this.extension = extension;
 	}
-	public int getFormat() 
-	{
+
+	public int getFormat() {
 		return format;
 	}
-	public String getDescription()
-	{
+
+	public String getDescription() {
 		return description;
 	}
-	public String getExtension()
-	{
+
+	public String getExtension() {
 		return extension;
 	}
 
-    public static final Map<Integer, ImageSaveFormat> lookupmap = new HashMap<Integer, ImageSaveFormat>();
-    static {
-        for (ImageSaveFormat imageformat : ImageSaveFormat.values())
-            lookupmap.put(imageformat.getFormat(), imageformat);
-    }
-    public static final Map<String, ImageSaveFormat> lookupfileextmap = new HashMap<String, ImageSaveFormat>();
-    static {
-        for (ImageSaveFormat imageformat : ImageSaveFormat.values())
-            lookupfileextmap.put(imageformat.getExtension(), imageformat);
-    }
+	public static final Map<Integer, ImageSaveFormat> lookupmap = new HashMap<Integer, ImageSaveFormat>();
+	static {
+		for (ImageSaveFormat imageformat : ImageSaveFormat.values())
+			lookupmap.put(imageformat.getFormat(), imageformat);
+	}
+	public static final Map<String, ImageSaveFormat> lookupfileextmap = new HashMap<String, ImageSaveFormat>();
+	static {
+		for (ImageSaveFormat imageformat : ImageSaveFormat.values())
+			lookupfileextmap.put(imageformat.getExtension(), imageformat);
+	}
 
-    public static final ImageSaveFormat lookup(String path, int format)
-    {
-    	if (format == -1)
-    		return lookupfileext(FilenameUtils.getExtension(path));
-    	return lookupmap.get(format);
-    }
-    public static final ImageSaveFormat lookup(int format)
-    {
-    	return lookupmap.get(format);
-    }
-    public static final ImageSaveFormat lookupfileext(String extension)
-    {
-    	return lookupfileextmap.get(extension);
-    }
+	public static final ImageSaveFormat lookup(String path, int format) {
+		if (format == -1)
+			return lookupfileext(FilenameUtils.getExtension(path));
+		if (!lookupmap.containsKey(format))
+			throw new InvalidFileFormatException();
+		return lookupmap.get(format);
+	}
+
+	public static final ImageSaveFormat lookup(int format) {
+		if (!lookupmap.containsKey(format))
+			throw new InvalidFileFormatException();
+		return lookupmap.get(format);
+	}
+
+	public static final ImageSaveFormat lookupfileext(String extension) {
+		if (!lookupfileextmap.containsKey(extension.toLowerCase()))
+			throw new InvalidFileFormatException();
+		return lookupfileextmap.get(extension.toLowerCase());
+	}
 
 	public static String getFormatHelp() {
 		StringBuilder formatHelp = new StringBuilder();
@@ -99,14 +105,12 @@ public enum ImageSaveFormat {
 		return formatHelp.toString();
 	}
 
-    public static final FileNameExtensionFilter[] getFileNameExtensionFilter()
-    {
-    	FileNameExtensionFilter[] filters = new FileNameExtensionFilter[ImageSaveFormat.values().length];
-    	int index = 0;
-    	for (ImageSaveFormat imageFormat : ImageSaveFormat.values())
-    		filters[index++] = new FileNameExtensionFilter(imageFormat.description, imageFormat.extension);
-    	return filters;
-    }
+	public static final FileNameExtensionFilter[] getFileNameExtensionFilter() {
+		FileNameExtensionFilter[] filters = new FileNameExtensionFilter[ImageSaveFormat.values().length];
+		int index = 0;
+		for (ImageSaveFormat imageFormat : ImageSaveFormat.values())
+			filters[index++] = new FileNameExtensionFilter(imageFormat.description, imageFormat.extension);
+		return filters;
+	}
 
 }
-

@@ -2,9 +2,9 @@
 **  OMTools
 **  A software package for processing and analyzing optical mapping data
 **  
-**  Version 1.2 -- January 1, 2017
+**  Version 1.4 -- March 10, 2018
 **  
-**  Copyright (C) 2017 by Alden Leung, Ting-Fung Chan, All rights reserved.
+**  Copyright (C) 2018 by Alden Leung, Ting-Fung Chan, All rights reserved.
 **  Contact:  alden.leung@gmail.com, tf.chan@cuhk.edu.hk
 **  Organization:  School of Life Sciences, The Chinese University of Hong Kong,
 **                 Shatin, NT, Hong Kong SAR
@@ -270,6 +270,26 @@ public class DataNode implements Identifiable<String> {
 		return circular;
 	}
 
+	@Override
+	public int hashCode() {
+		return this.name.hashCode();
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof DataNode))
+			return false;
+		DataNode data = ((DataNode) obj);
+		if (!this.name.equals(data.name))
+			return false;
+		if (this.size != data.size)
+			return false;
+		if (this.refp.length != data.refp.length)
+			return false;
+		for (int i = 0; i < refp.length; i++)
+			if (this.refp[i] != data.refp[i])
+				return false;		
+		return true;
+	}
 	/**
 	 * Fixes a molecule using 4 steps <li>If data with zero size has any label, all labels are erased <li>Label positions are changed to 1 or <code>size</code> if they locate at position smaller than 1 or larger than <code>size</code> respectively. This fix can lead to overlapped signals <li>Label positions are sorted in ascending order <li>Overlapped labels are separated to consecutive signals. This shifts all followed signals and augments the size
 	 * 
@@ -607,7 +627,7 @@ public class DataNode implements Identifiable<String> {
 		}
 		return kmerlist;
 	}
-
+/*
 	public List<Kmer> getErrorKmerWord(int kmerlen, int maxnosignalregion, int errorno) {
 		List<Kmer> kmerlist = new ArrayList<Kmer>();
 		// Generate error-free kmer list
@@ -658,7 +678,7 @@ public class DataNode implements Identifiable<String> {
 			}
 			return errorkmerlist;
 		}
-	}
+	}*/
 
 	// Modify
 	public void insertSignal(long pos) {
