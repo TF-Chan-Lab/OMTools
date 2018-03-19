@@ -72,6 +72,7 @@ public class DataSignalCountNode extends DataNode {
 						this.refpSigMatchCount[currentrefpos - 1]++;
 						this.refpCount[currentrefpos - 1]++;
 						this.refpevidencelist.get(currentrefpos - 1).add(result);
+						
 					}
 					currentrefpos += 1;
 					break;

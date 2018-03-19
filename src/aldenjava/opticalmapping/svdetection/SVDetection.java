@@ -819,6 +819,9 @@ public class SVDetection implements SelectableMode {
 			List<Long> sizes = new ArrayList<>();
 			for (int j = i + 1; j < standardSVList.size(); j++) {
 				StandardSVNode lastSV = standardSVList.get(j);
+				if (!lastSV.region.isClose(firstSV.region, maxInvSize))
+					break;
+
 				long pos1 = standardSVList.get(j - 1).region.start;
 				long pos2 = standardSVList.get(j).region.start;
 				if (ref.refp[refpPos] == pos1) // This signal is not counted.
@@ -832,8 +835,6 @@ public class SVDetection implements SelectableMode {
 				sizes.add(lastSV.region.start - lastPos - 1);
 				lastPos = lastSV.region.start;
 
-				if (!lastSV.region.isClose(firstSV.region, maxInvSize))
-					break;
 				if (lastSV.type.equalsIgnoreCase("Insertion.site"))
 					cigar.append('I');
 				else if (lastSV.type.equalsIgnoreCase("Deletion.site"))

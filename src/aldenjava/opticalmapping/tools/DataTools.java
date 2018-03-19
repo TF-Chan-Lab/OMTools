@@ -80,8 +80,6 @@ public class DataTools {
 		OptionSpec<Long> oconcat = parser.accepts("concat", "Concatenate all data entries into single entry. -1: not activated; Non-negative value: space (segment without any signal) between each data entry. Ignore any data modification functions").withRequiredArg().ofType(Long.class).defaultsTo(-1L);
 		ConcatInfoReader.assignOptions(parser, 2);
 		ConcatInfoWriter.assignOptions(parser, 2);
-		parser.accepts("concatin").withRequiredArg();
-		parser.accepts("concatout").withRequiredArg();
 
 		parser.addHeader("Low complexity filtering", 2);
 		OptionSpec<Integer> olowcom = parser.accepts("lowcom", "Retain/Remove molecules with low complexity -1: Retain Low Complexity; 0: Do nothing; 1: Retain High Complexity").withRequiredArg().ofType(Integer.class).defaultsTo(0);

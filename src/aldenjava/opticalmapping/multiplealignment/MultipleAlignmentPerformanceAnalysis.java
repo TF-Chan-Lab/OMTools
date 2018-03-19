@@ -136,7 +136,7 @@ public class MultipleAlignmentPerformanceAnalysis {
 		MAFReader.assignOptions(parser, 1);
 		CollinearBlockReader.assignOptions(parser, 1);
 		parser.addHeader("multiple alignment options", 1);
-		parser.accepts("statout", "Statistics output").withRequiredArg().ofType(String.class);
+		parser.accepts("statout", "Statistics output").withRequiredArg().ofType(String.class).required();
 		
 		if (args.length == 0) {
 			parser.printHelpOn(System.out);

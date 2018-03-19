@@ -31,6 +31,8 @@ package aldenjava.opticalmapping.miscellaneous;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,15 +55,21 @@ import joptsimple.OptionSpecBuilder;
  */
 public class ExtendOptionParser extends OptionParser {
 
+	// A static variable for manual generation
 	public static boolean manualGeneration = false;
-	private List<String> header;
-	private List<Integer> level;
-	private List<OptionParser> subParser;
+	// Static variables for OMTools GUI
+	public static boolean guiGeneration = false;
+	public static ExtendOptionParser lastParserInstance = null;
+	
+	
+	private List<String> headers;
+	private List<Integer> headerLevels;
+//	private List<OptionParser> subParser;
 	private List<List<String>> optionList;
 	private List<List<String>> optionDescriptionList;
 	private List<String> recentOptionList;
 	private List<String> recentOptionDescriptionList;
-	private OptionParser recentparser;
+//	private OptionParser recentparser;
 	private final String title;
 	private final String description;
 	private Map<String, String> aliasMap;
@@ -77,8 +85,8 @@ public class ExtendOptionParser extends OptionParser {
 		super();
 		this.title = title;
 		this.description = description;
-		header = new ArrayList<String>();
-		level = new ArrayList<Integer>();
+		headers = new ArrayList<String>();
+		headerLevels = new ArrayList<Integer>();
 		optionList = new ArrayList<List<String>>();
 		optionDescriptionList = new ArrayList<List<String>>();
 		recentOptionList = null;
@@ -87,11 +95,11 @@ public class ExtendOptionParser extends OptionParser {
 
 	}
 
-	public void addHeader(String s, int level) {
+	public void addHeader(String s, int headerLevels) {
 		if (s != null) {
-			if (level >= 0) {
-				this.header.add(s);
-				this.level.add(level);
+			if (headerLevels >= 0) {
+				this.headers.add(s);
+				this.headerLevels.add(headerLevels);
 				recentOptionList = new ArrayList<String>();
 				recentOptionDescriptionList = new ArrayList<String>();
 			}
@@ -109,7 +117,7 @@ public class ExtendOptionParser extends OptionParser {
 			recentOptionList.add(option);
 			recentOptionDescriptionList.add(description);
 		} else {
-			// rewrite description when there is no header
+			// rewrite description when there is no headers
 			for (int i = 0; i < optionList.size(); i++) {
 				List<String> singleOptionList = optionList.get(i);
 				for (int j = 0; j < singleOptionList.size(); j++) {
@@ -138,19 +146,25 @@ public class ExtendOptionParser extends OptionParser {
 	
 	@Override
 	public void printHelpOn(OutputStream sink) {
+		// Hack for manual generation and GUI menu generation
 		if (manualGeneration) {
 			printHelpOnManualGeneration(sink);
 			return;
 		}
+		if (guiGeneration) {
+			lastParserInstance = this;
+			return;
+		}
+		
 		int paragraphLength = 75;
 		try {
 			NullHelpFormatter nhf = new NullHelpFormatter();
 			super.formatHelpWith(nhf);
 			super.printHelpOn(new NullOutputStream());
-
-			if (recentparser != null)
-				subParser.add(recentparser);
-			recentparser = null;
+			
+//			if (recentparser != null)
+//				subParser.add(recentparser);
+//			recentparser = null;
 			if (title != null) {
 				sink.write(("  " + title + "\n").getBytes());
 				if (description != null && !description.isEmpty()) {
@@ -163,14 +177,14 @@ public class ExtendOptionParser extends OptionParser {
 				sink.write((StringUtils.repeat("=", 60) + "\n").getBytes());
 			}
 			
-			for (int i = 0; i < header.size(); i++) {
+			for (int i = 0; i < headers.size(); i++) {
 				String separateLine = "";
-				String leftAdjust = StringUtils.repeat(" ", (level.get(i) - 1) * 2);
-				if (level.get(i) == 1)
+				String leftAdjust = StringUtils.repeat(" ", (headerLevels.get(i) - 1) * 2);
+				if (headerLevels.get(i) == 1)
 					separateLine = StringUtils.repeat("=", 10);
 				else
 					separateLine = StringUtils.repeat("-", 10);
-				sink.write(("\n" + leftAdjust + separateLine + header.get(i) + separateLine + "\n").getBytes());
+				sink.write(("\n" + leftAdjust + separateLine + headers.get(i) + separateLine + "\n").getBytes());
 				int elements = optionList.get(i).size();
 				leftAdjust = "  " + leftAdjust;
 				for (int j = 0; j < elements; j++) {
@@ -206,21 +220,21 @@ public class ExtendOptionParser extends OptionParser {
 			super.formatHelpWith(nhf);
 			super.printHelpOn(new NullOutputStream());
 
-			if (recentparser != null)
-				subParser.add(recentparser);
-			recentparser = null;
+//			if (recentparser != null)
+//				subParser.add(recentparser);
+//			recentparser = null;
 			if (title != null) {
 				sink.write(("\\section{" + title + "}\n").getBytes());
 				String description = this.description.replaceAll("in\\ssilico", "\\\\textit{in silico}");
 				sink.write((description + "\n").getBytes());
 			}
 			
-			for (int i = 0; i < header.size(); i++) {
+			for (int i = 0; i < headers.size(); i++) {
 				
-				if (level.get(i) == 1)
-					sink.write(("\\subsection{" + header.get(i) + "}\n").getBytes());
-				else if (level.get(i) == 2)
-					sink.write(("\\subsubsection{" + header.get(i) + "}\n").getBytes());
+				if (headerLevels.get(i) == 1)
+					sink.write(("\\subsection{" + headers.get(i) + "}\n").getBytes());
+				else if (headerLevels.get(i) == 2)
+					sink.write(("\\subsubsection{" + headers.get(i) + "}\n").getBytes());
 				sink.write(("\\begin{description}\n").getBytes());
 				
 				
@@ -274,6 +288,68 @@ public class ExtendOptionParser extends OptionParser {
 		}
 		return super.parse(args.toArray(new String[args.size()]));
 	}
+	
+	public Map<String, ? extends OptionDescriptor> getOptionDescriptors() {
+		try {
+			NullHelpFormatter nhf = new NullHelpFormatter();
+			super.formatHelpWith(nhf);
+			super.printHelpOn(new NullOutputStream());
+			return nhf.options;
+		} catch (IOException e) {
+			throw new RuntimeException("Exception in obtaining option descriptors");
+		}
+	}
+	
+	/**
+	 * Return the ExtendOptionParser of a main class. The method requires guiGeneration to be true.
+	 * @param clazz
+	 * @return
+	 */
+	public static ExtendOptionParser getClassParser(Class<?> clazz) {
+		if (!ExtendOptionParser.guiGeneration)
+			throw new IllegalStateException("guiGeneration needs to be true. ");
+		try {
+			Class<?>[] argTypes = new Class[] { String[].class };
+			Method main = clazz.getDeclaredMethod("main", argTypes);
+			main.invoke(null, (Object) new String[]{});
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		return ExtendOptionParser.lastParserInstance;
+	}
+	// Getters. Used in GUI
+	public List<String> getHeaders() {
+		return headers;
+	}
+
+	public List<Integer> getHeaderLevels() {
+		return headerLevels;
+	}
+
+	public List<List<String>> getOptionList() {
+		return optionList;
+	}
+
+	public List<List<String>> getOptionDescriptionList() {
+		return optionDescriptionList;
+	}
+
+	public List<String> getRecentOptionList() {
+		return recentOptionList;
+	}
+
+	public List<String> getRecentOptionDescriptionList() {
+		return recentOptionDescriptionList;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+	
 }
 
 class NullHelpFormatter implements HelpFormatter {

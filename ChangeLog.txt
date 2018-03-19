@@ -1,3 +1,18 @@
+Version 1.4a
+SVDetection
+- Fixed minor bug in inversion detection
+DataQualityCheck
+- Added handling to IOException in reading files
+DataTools
+- Removed unused concatin and concatout option parsing
+ExtendOptionParser
+- Added support for future OMTools GUI
+MAFReader
+SegmentIdentifierWriter
+CollinearBlockReader
+MultipleAlignmentPerformanceAnalysis
+- Set some options to be required
+
 Version 1.4
 Modified classes:
 UnweightedRange

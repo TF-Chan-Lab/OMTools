@@ -51,7 +51,7 @@ public class SegmentIdentifierWriter extends OMWriter<SegmentIdentifier> {
 
 	public static void assignOptions(ExtendOptionParser parser, int level) {
 		parser.addHeader("Segment Identifier Writer Options", level);
-		parser.accepts("siout", "Output segment identifier file").withRequiredArg().ofType(String.class);
+		parser.accepts("siout", "Output segment identifier file").withRequiredArg().ofType(String.class).required();
 	}
 
 }

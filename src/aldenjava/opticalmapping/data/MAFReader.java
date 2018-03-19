@@ -79,7 +79,7 @@ public class MAFReader extends OMReader<MAFNode> {
 
 	public static void assignOptions(ExtendOptionParser parser, int level) {
 		parser.addHeader("MAF Reader", level);
-		parser.accepts("mafin", "Multiple alignment format input.").withRequiredArg().ofType(String.class);		
+		parser.accepts("mafin", "Multiple alignment format input.").withRequiredArg().ofType(String.class).required();		
 	}
 
 }

@@ -37,7 +37,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -89,18 +91,34 @@ public class DataQualityCheck {
 		List<String> imageExtensions = options.valuesOf(oimageformat);
 		boolean gradcolor = (boolean) options.valueOf("gradcolor");
 		String prefix = (String) options.valueOf("prefix");
-		List<String> dataFileNames = (List<String>) options.valuesOf("optmapin");
-		List<String> names = dataFileNames;		
+		List<String> dataFileNames = new ArrayList<>((List<String>) options.valuesOf("optmapin"));
+		List<String> names = new ArrayList<>(dataFileNames);		
 		if (options.has("name")) {
-			names = (List<String>) options.valuesOf("name");
+			names = new ArrayList<>((List<String>) options.valuesOf("name"));
 			if (names.size() != dataFileNames.size())
 				throw new IllegalArgumentException("Mismatch number of arguments provided for optmapin and name");
 		}
-		int noOfDataSets = names.size();
-		LinkedHashMap<String, LinkedHashMap<String, DataNode>> dataSetMap = new LinkedHashMap<>();
-		for (String dataFileName : dataFileNames)
-			dataSetMap.put(dataFileName, OptMapDataReader.readAllData(dataFileName));
 		
+		List<Integer> errorFileIndices = new ArrayList<>();
+		LinkedHashMap<String, LinkedHashMap<String, DataNode>> dataSetMap = new LinkedHashMap<>();
+		for (int i = 0; i < dataFileNames.size(); i++) {
+			String dataFileName = dataFileNames.get(i);
+			try {
+				LinkedHashMap<String, DataNode> dataMap = OptMapDataReader.readAllData(dataFileName);
+				dataSetMap.put(dataFileName, dataMap);
+			} catch (IOException e) {
+				errorFileIndices.add(i);
+				System.err.println("Error in parsing " + dataFileName);
+				e.printStackTrace();
+			}
+		}
+		Collections.reverse(errorFileIndices);
+		for (int i : errorFileIndices) {
+			dataFileNames.remove(i);
+			names.remove(i);
+		}
+		
+		int noOfDataSets = names.size();
 		LinkedHashMap<String, DataNode> refMap = null;
 		if (options.has("refmapin"))
 			refMap = ReferenceReader.readAllData(options);

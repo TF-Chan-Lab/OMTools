@@ -114,7 +114,7 @@ public class CollinearBlockReader extends OMReader<CollinearBlock> {
 
 	public static void assignOptions(ExtendOptionParser parser, int level) {
 		parser.addHeader("Collinear Block Reader Options", level);
-		parser.accepts("cblin", "Multiple alignment collinear blocks input.").withRequiredArg().ofType(String.class);		
+		parser.accepts("cblin", "Multiple alignment collinear blocks input.").withRequiredArg().ofType(String.class).required();
 	}
 
 

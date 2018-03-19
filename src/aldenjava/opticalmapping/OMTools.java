@@ -76,7 +76,7 @@ import aldenjava.script.TWINResultRepeatRemover;
  */
 public class OMTools {
 
-	public final static String version = "OMTools Version 1.4";
+	public final static String version = "OMTools Version 1.4a";
 	public final static String author = "Alden Leung";
 	
 	private static void displayOptions() throws IOException, MapperConstructionException {
