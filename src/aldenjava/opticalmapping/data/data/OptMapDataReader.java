@@ -367,6 +367,15 @@ public class OptMapDataReader extends OMReader<DataNode> {
 		// #2h int float
 		// #Qh QualityScoreID QualityScores[N]
 		// #Qf str float
+		/* BNX File Version 1.3 (According to the specification sheet of V1.3: GlobalScanNumber -- Not present in all BNX files)
+		   #0h LabelChannel MoleculeId Length AvgIntensity SNR NumberofLabels OriginalMoleculeId ScanNumber ScanDirection ChipId Flowcell RunId Column StartFOV StartX StartY EndFOV EndX EndY
+		   #0f int int int float float int int int int string int int int int int int int int int
+		   #1h LabelChannel LabelPosition[N]
+		   #1f int int
+		   #Qh QualityScoreID QualityScores[N]
+		   #Qf string float	
+		*/
+
 		String name = "";
 		long size = -1;
 
@@ -374,7 +383,7 @@ public class OptMapDataReader extends OMReader<DataNode> {
 		double[] snr = null;
 		double[] intensity = null;
 		
-		// BNX version 1.0
+		// BNX version 1.0 and above (common objects)
 		double avgIntensity = -1;
 		double moleculeSNR = -1;
 		int numberOfLabels = -1;
@@ -386,24 +395,25 @@ public class OptMapDataReader extends OMReader<DataNode> {
 		boolean hasScanNumber = false;
 
 
-		// BNX version 1.2
+		// BNX version 1.2 and above
 		int runID = -1;
 		int globalScanNumber = -1;		
 		boolean hasGlobalScanNumber = false;
-		
+
+		// global check 
 		boolean gotNameSizeInfo = false;
 		boolean gotDetailInfo = false;
 		boolean gotSNRInfo = false;
 		boolean gotIntensityInfo = false;
-		do {
 
+		do {
 			String s = this.nextline.trim();
 			String[] l = s.split("\t");
 			switch (l[0]) {
 				case "0":
 					name = l[1];
 					size = (long) Double.parseDouble(l[2]);
-					// v1.0
+					// v1.0 and above (global)
 					if (l.length >= 11) {
 						avgIntensity = Double.parseDouble(l[3]);
 						moleculeSNR = Double.parseDouble(l[4]);
@@ -416,13 +426,24 @@ public class OptMapDataReader extends OMReader<DataNode> {
 						hasScanNumber = true;
 						hasGlobalScanNumber = false;
 					}
-					// v1.2
+					// v1.2 (specific)
 					if (l.length == 13) {
 						runID = Integer.parseInt(l[11]);
 						globalScanNumber = Integer.parseInt(l[12]);
 						hasScanNumber = true;
 						hasGlobalScanNumber = true;
 					}
+					// v1.3 (specific)
+					if (l.length == 19){//GlobalScanNumber not present
+						runID = Integer.parseInt(l[11]);
+						hasScanNumber = true;
+					}
+					if (l.length == 20){//GlobalScanNumber present
+						runID = Integer.parseInt(l[11]);
+						globalScanNumber = Integer.parseInt(l[19]);
+						hasScanNumber = true;
+						hasGlobalScanNumber = true;
+					}					
 					gotNameSizeInfo = true;
 					break;
 				case "1":
