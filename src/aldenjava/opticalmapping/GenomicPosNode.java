@@ -52,7 +52,6 @@ public final class GenomicPosNode implements Comparable<GenomicPosNode> {
 	public final long stop;
 //	public final static String separator = "[:\\-\\s]+"; // :, -, space
 	public final static String separator = "[:\\-]+"; // :, -, space
-	public final Pattern pattern = Pattern.compile("\\s*([^:\\s]+)(?::|\\s)(-?\\d+)(?:(?:-|\\s)(-?\\d+))?\\s*");
 //	public final Pattern pattern = Pattern.compile("\\s*([^:]+)(?::)(-?\\d+)(?:(?:-)(-?\\d+))?\\s*");
 	public GenomicPosNode(String s) throws IllegalArgumentException {
 //		String[] l = s.split(GenomicPosNode.separator);
@@ -75,6 +74,8 @@ public final class GenomicPosNode implements Comparable<GenomicPosNode> {
 //		this.ref = ref;
 //		this.start = start;
 //		this.stop = stop;
+
+		Pattern pattern = Pattern.compile("\\s*([^:\\s]+)(?::|\\s)(-?\\d+)(?:(?:-|\\s)(-?\\d+))?\\s*");
 		Matcher matcher = pattern.matcher(s);
 		if (matcher.matches()) {
 			String ref = matcher.group(1);
